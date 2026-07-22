@@ -112,15 +112,17 @@ namespace ProjectC.LoreUnity
         /// </summary>
         private static (int, string) Execute(string[] args, string lorePath, string repoPath)
         {
-            // Build args: always set --repository and --non-interactive
-            var fullArgs = new List<string>(args);
-            // If args already contain --repository, don't add again
+            // Build args: --repository must come BEFORE the subcommand
+            // (Lore parses global options only at top level)
+            var fullArgs = new List<string>();
             if (!args.Any(a => a.StartsWith("--repository")))
             {
-                fullArgs.Insert(0, "--repository");
-                fullArgs.Insert(1, repoPath);
+                fullArgs.Add("--repository");
+                fullArgs.Add(repoPath);
             }
-            fullArgs.Add("--non-interactive");
+            fullArgs.AddRange(args);
+            if (!args.Any(a => a == "--non-interactive"))
+                fullArgs.Add("--non-interactive");
 
             try
             {
@@ -260,9 +262,15 @@ namespace ProjectC.LoreUnity
 
             var (code, output) = await ExecuteAsync(args);
             if (code != 0 || string.IsNullOrWhiteSpace(output))
+            {
+                UnityEngine.Debug.Log($"[Lore] revision diff FAILED: exit={code}, parent={commit.ParentSignature}, target={commit.Signature}");
+                UnityEngine.Debug.Log($"[Lore] output (first 500 chars): {output?.Substring(0, Math.Min(500, output?.Length ?? 0))}");
                 return new List<LoreCommitFile>();
+            }
 
-            return LoreCliParser.ParseCommitDiffFiles(output);
+            var files = LoreCliParser.ParseCommitDiffFiles(output);
+            UnityEngine.Debug.Log($"[Lore] revision diff OK: parsed {files.Count} files from {commit.RevisionNumber}@{commit.ShortHash}");
+            return files;
         }
 
         public static async Task<(bool Success, string Output)> StageAllAsync()

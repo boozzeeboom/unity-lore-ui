@@ -525,8 +525,10 @@ namespace ProjectC.LoreUnity
 
         private async Task ShowCommitFilesAsync(LoreCommit commit)
         {
+            UnityEngine.Debug.Log($"[Lore] ShowCommitFilesAsync called for commit #{commit?.RevisionNumber} {commit?.ShortHash}, parent={commit?.ParentSignature}");
             var files = await LoreCliService.GetCommitFilesAsync(commit);
             _currentCommitFiles = files;
+            UnityEngine.Debug.Log($"[Lore] ShowCommitFilesAsync: got {files.Count} files");
 
             if (_commitFilesList == null) return;
 
