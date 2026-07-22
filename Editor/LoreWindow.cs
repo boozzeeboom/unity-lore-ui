@@ -29,6 +29,7 @@ namespace ProjectC.LoreUnity
         private Label _statusSummary;
         private Label _statusBar;
         private TextField _commitMsg;
+        private Button _startStopBtn;
         private ListView _fileList;
         private ListView _commitList;
         private Label _commitDetailText;
@@ -114,6 +115,8 @@ namespace ProjectC.LoreUnity
             _diffFileLabel = root.Q<Label>("diff-file-label");
             _diffText = root.Q<Label>("diff-text");
 
+            _startStopBtn = root.Q<Button>("start-stop-btn");
+
             _fileList = root.Q<ListView>("file-list");
             _commitList = root.Q<ListView>("commit-list");
             _localBranchList = root.Q<ListView>("local-branch-list");
@@ -134,6 +137,9 @@ namespace ProjectC.LoreUnity
 
             // Scan button
             root.Q<Button>("scan-btn").clicked += () => _ = ScanForServersAsync();
+
+            // Start/Stop server button
+            _startStopBtn.clicked += () => _ = ToggleServerAsync();
 
             // Settings button
             root.Q<Button>("settings-btn").clicked += () =>
@@ -322,6 +328,18 @@ namespace ProjectC.LoreUnity
                     LoreSettings.ServerUrl = first.Url;
                     SetStatus($"Connected to {first.Url}");
                     await Task.Delay(500);
+
+                    // Auto-start if stopped
+                    if (!first.IsAlive)
+                    {
+                        SetStatus("Starting server...");
+                        var started = await LoreServerManager.StartServerAsync();
+                        if (started)
+                            SetStatus("Server started ✓");
+                        else
+                            SetStatus("Server not running. Click ▶ to start it.");
+                    }
+
                     await RefreshAllAsync();
                 }
                 else if (choice == 2) // Show All
@@ -332,6 +350,18 @@ namespace ProjectC.LoreUnity
                         LoreSettings.ServerUrl = sel.Url;
                         SetStatus($"Connected to {sel.Url}");
                         await Task.Delay(500);
+
+                        // Auto-start if stopped
+                        if (!sel.IsAlive)
+                        {
+                            SetStatus("Starting server...");
+                            var started = await LoreServerManager.StartServerAsync();
+                            if (started)
+                                SetStatus("Server started ✓");
+                            else
+                                SetStatus("Server not running. Click ▶ to start it.");
+                        }
+
                         await RefreshAllAsync();
                     }
                 }
@@ -674,6 +704,42 @@ namespace ProjectC.LoreUnity
             _serverStatus.tooltip = alive
                 ? $"Server running at {LoreSettings.ServerUrl}"
                 : "Server offline";
+
+            // Update start/stop button
+            if (_startStopBtn != null)
+            {
+                var hasExe = !string.IsNullOrEmpty(LoreCliService.ResolveServerPath());
+                _startStopBtn.text = alive ? "■" : "▶";
+                _startStopBtn.tooltip = alive ? "Stop Lore server" : "Start Lore server";
+                _startStopBtn.style.display = (alive || hasExe) ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+        }
+
+        // ── Start / Stop server ──
+
+        private async Task ToggleServerAsync()
+        {
+            if (LoreServerManager.IsRunning)
+            {
+                LoreServerManager.StopServer();
+                UpdateServerIndicator(false);
+                SetStatus("Server stopped.");
+            }
+            else
+            {
+                SetStatus("Starting server...");
+                var success = await LoreServerManager.StartServerAsync();
+                UpdateServerIndicator(success);
+                if (success)
+                {
+                    SetStatus("Server started ✓");
+                    await RefreshAllAsync();
+                }
+                else
+                {
+                    SetStatus("Failed to start server. Check preferences.");
+                }
+            }
         }
 
         // ── Helpers ──

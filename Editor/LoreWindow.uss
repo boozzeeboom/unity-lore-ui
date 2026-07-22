@@ -10,6 +10,8 @@
 
 /* ── Toolbar ── */
 #toolbar {
+    flex-direction: row;
+    align-items: center;
     background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
     border-bottom-width: 1px;
@@ -38,6 +40,7 @@
 
 /* ── Tab bar ── */
 #tab-bar {
+    flex-direction: row;
     background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
     border-bottom-width: 1px;
@@ -158,6 +161,7 @@
 
 /* ── Branches ── */
 #branches-toolbar {
+    flex-direction: row;
     margin-bottom: 4px;
 }
 
@@ -182,6 +186,13 @@
 }
 
 /* ── Diff ── */
+#diff-toolbar {
+    flex-direction: row;
+    padding: 2px 4px;
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
+    border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
+    border-bottom-width: 1px;
+}
 .diff-scroll {
     flex-grow: 1;
     background-color: #1e1e1e;

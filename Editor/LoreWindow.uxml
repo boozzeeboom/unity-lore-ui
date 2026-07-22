@@ -9,6 +9,7 @@
             <ui:Label name="server-status" text="●" tooltip="Server status" />
             <ui:Button text="↻" name="refresh-btn" class="toolbar-button" tooltip="Refresh" />
             <ui:Button text="⊞" name="scan-btn" class="toolbar-button" tooltip="Scan for Lore servers" />
+            <ui:Button text="▶" name="start-stop-btn" class="toolbar-button" tooltip="Start Lore server" />
             <ui:Button text="⚙" name="settings-btn" class="toolbar-button" tooltip="Settings" />
         </ui:VisualElement>
 
