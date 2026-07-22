@@ -93,22 +93,25 @@ namespace ProjectC.LoreUnity
         /// </summary>
         public static async Task<(int ExitCode, string Output)> ExecuteAsync(params string[] args)
         {
-            return await Task.Run(() => Execute(args));
+            // Read EditorPrefs-backed settings on main thread before Task.Run
+            var lorePath = ResolveLorePath();
+            var repoPath = LoreSettings.RepoPath;
+
+            if (string.IsNullOrEmpty(lorePath))
+                return (-1, "[ERROR] lore.exe not found. Configure path in Edit → Preferences → Lore.");
+
+            if (string.IsNullOrEmpty(repoPath) || !Directory.Exists(repoPath))
+                return (-1, "[ERROR] Repository path not found: " + repoPath);
+
+            return await Task.Run(() => Execute(args, lorePath, repoPath));
         }
 
         /// <summary>
         /// Synchronous execution (used from background thread).
+        /// All EditorPrefs-sensitive values are pre-resolved on the main thread.
         /// </summary>
-        private static (int, string) Execute(string[] args)
+        private static (int, string) Execute(string[] args, string lorePath, string repoPath)
         {
-            var lorePath = ResolveLorePath();
-            if (string.IsNullOrEmpty(lorePath))
-                return (-1, "[ERROR] lore.exe not found. Configure path in Edit → Preferences → Lore.");
-
-            var repoPath = LoreSettings.RepoPath;
-            if (string.IsNullOrEmpty(repoPath) || !Directory.Exists(repoPath))
-                return (-1, "[ERROR] Repository path not found: " + repoPath);
-
             // Build args: always set --repository and --non-interactive
             var fullArgs = new List<string>(args);
             // If args already contain --repository, don't add again
