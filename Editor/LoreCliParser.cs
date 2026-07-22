@@ -49,6 +49,18 @@ namespace ProjectC.LoreUnity
         public bool IsUnpushed;
     }
 
+    /// <summary>
+    /// A file changed in a specific commit, parsed from diff output.
+    /// </summary>
+    [Serializable]
+    public class LoreCommitFile
+    {
+        public string Path;
+        public LoreFileStatusType Status;
+        public int Additions;
+        public int Deletions;
+    }
+
     [Serializable]
     public class LoreBranch
     {
@@ -415,6 +427,70 @@ namespace ProjectC.LoreUnity
                     files.Add(path);
             }
             return files;
+        }
+
+        /// <summary>
+        /// Parse `lore diff --source P --target C` output into a list of changed files
+        /// with status and +/- line counts.
+        /// </summary>
+        public static List<LoreCommitFile> ParseCommitDiffFiles(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return new List<LoreCommitFile>();
+
+            var result = new List<LoreCommitFile>();
+            // Split by file blocks: each block starts with a line like "--- <path>" or "--- a/<path>"
+            var blocks = Regex.Split(text, @"(?=^---\s+)", RegexOptions.Multiline);
+
+            foreach (var block in blocks)
+            {
+                var trimmed = block.Trim();
+                if (string.IsNullOrEmpty(trimmed)) continue;
+
+                // Extract paths
+                var oldPathMatch = Regex.Match(trimmed, @"^---\s+(.+)$", RegexOptions.Multiline);
+                var newPathMatch = Regex.Match(trimmed, @"^\+\+\+\s+(.+)$", RegexOptions.Multiline);
+
+                if (!newPathMatch.Success) continue;
+
+                var oldPath = oldPathMatch.Success ? oldPathMatch.Groups[1].Value.Trim() : "";
+                var newPath = newPathMatch.Groups[1].Value.Trim();
+
+                // Normalize: skip /dev/null entries as path
+                var displayPath = newPath;
+                if (displayPath.StartsWith("b/")) displayPath = displayPath.Substring(2);
+                if (displayPath.StartsWith("a/")) displayPath = displayPath.Substring(2);
+                if (displayPath == "/dev/null" || displayPath == "dev/null")
+                    displayPath = oldPath.StartsWith("a/") ? oldPath.Substring(2) : oldPath;
+                if (displayPath == "/dev/null" || displayPath == "dev/null") continue;
+
+                // Determine status
+                var isNew = oldPath.Contains("/dev/null") || oldPath == "dev/null";
+                var isDeleted = newPath.Contains("/dev/null") || newPath == "dev/null";
+                var status = isNew ? LoreFileStatusType.Added
+                          : isDeleted ? LoreFileStatusType.Deleted
+                          : LoreFileStatusType.Modified;
+
+                // Count +/- lines (only in hunk lines starting with + or -, not the ---/+++ headers)
+                int additions = 0, deletions = 0;
+                var lines = trimmed.Split('\n');
+                foreach (var line in lines)
+                {
+                    if (line.StartsWith("+") && !line.StartsWith("+++"))
+                        additions++;
+                    else if (line.StartsWith("-") && !line.StartsWith("---"))
+                        deletions++;
+                }
+
+                result.Add(new LoreCommitFile
+                {
+                    Path = displayPath,
+                    Status = status,
+                    Additions = additions,
+                    Deletions = deletions
+                });
+            }
+
+            return result;
         }
     }
 }

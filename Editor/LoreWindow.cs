@@ -37,6 +37,8 @@ namespace ProjectC.LoreUnity
         private ListView _remoteBranchList;
         private Label _diffFileLabel;
         private Label _diffText;
+        private ListView _commitFilesList;
+        private Label _commitFilesLabel;
 
         private VisualElement _statusPanel;
         private VisualElement _historyPanel;
@@ -51,6 +53,7 @@ namespace ProjectC.LoreUnity
         private List<LoreBranch> _localBranches = new List<LoreBranch>();
         private List<LoreBranch> _remoteBranches = new List<LoreBranch>();
         private List<(string Display, LoreFileEntry Entry)> _fileDisplayList = new List<(string, LoreFileEntry)>();
+        private List<LoreCommitFile> _currentCommitFiles = new List<LoreCommitFile>();
         private string _currentBranchName = "—";
 
         // ── Timer ──
@@ -123,6 +126,8 @@ namespace ProjectC.LoreUnity
             _commitList = root.Q<ListView>("commit-list");
             _localBranchList = root.Q<ListView>("local-branch-list");
             _remoteBranchList = root.Q<ListView>("remote-branch-list");
+            _commitFilesList = root.Q<ListView>("commit-files-list");
+            _commitFilesLabel = root.Q<Label>("commit-files-label");
 
             _statusPanel = root.Q<VisualElement>("status-panel");
             _historyPanel = root.Q<VisualElement>("history-panel");
@@ -500,6 +505,9 @@ namespace ProjectC.LoreUnity
                                      $"{commit.Message}";
 
             _selectedCommitHash = commit.Signature;
+
+            // Load files changed in this commit
+            _ = ShowCommitFilesAsync(commit);
         }
 
         private string _selectedCommitHash;
@@ -509,6 +517,79 @@ namespace ProjectC.LoreUnity
             _commitList.ClearSelection();
             _commitDetailText.text = "Select a commit";
             _selectedCommitHash = null;
+            _currentCommitFiles.Clear();
+            _commitFilesList.itemsSource = null;
+            _commitFilesList.Rebuild();
+            _commitFilesLabel.text = "Changed Files:";
+        }
+
+        private async Task ShowCommitFilesAsync(LoreCommit commit)
+        {
+            var files = await LoreCliService.GetCommitFilesAsync(commit);
+            _currentCommitFiles = files;
+
+            if (_commitFilesList == null) return;
+
+            _commitFilesLabel.text = files.Count > 0
+                ? $"Changed Files ({files.Count}):"
+                : "Changed Files:";
+
+            _commitFilesList.itemsSource = _currentCommitFiles;
+            _commitFilesList.makeItem = () =>
+            {
+                var ve = new VisualElement();
+                ve.style.flexDirection = FlexDirection.Row;
+                var label = new Label();
+                label.style.flexGrow = 1f;
+                label.style.fontSize = 10;
+                label.style.paddingLeft = 4;
+                label.style.unityTextAlign = TextAnchor.MiddleLeft;
+                var extractBtn = new Button();
+                extractBtn.text = "📋";
+                extractBtn.tooltip = "Save As...";
+                extractBtn.style.fontSize = 9;
+                extractBtn.style.paddingLeft = 2;
+                extractBtn.style.paddingRight = 2;
+                extractBtn.style.backgroundColor = new Color(0, 0, 0, 0);
+                extractBtn.style.borderLeftWidth = 0;
+                extractBtn.style.borderRightWidth = 0;
+                extractBtn.style.borderTopWidth = 0;
+                extractBtn.style.borderBottomWidth = 0;
+                ve.Add(label);
+                ve.Add(extractBtn);
+                return ve;
+            };
+            _commitFilesList.bindItem = (element, index) =>
+            {
+                if (index >= _currentCommitFiles.Count) return;
+                var cf = _currentCommitFiles[index];
+                var label = element[0] as Label;
+                var btn = element[1] as Button;
+
+                if (label != null)
+                {
+                    var icon = cf.Status switch
+                    {
+                        LoreFileStatusType.Added => "➕",
+                        LoreFileStatusType.Deleted => "🔴",
+                        _ => "🟡"
+                    };
+                    var stat = cf.Additions > 0 || cf.Deletions > 0
+                        ? $" (+{cf.Additions}/-{cf.Deletions})"
+                        : "";
+                    label.text = $"{icon} {cf.Path}{stat}";
+                    label.tooltip = $"{cf.Status}: {cf.Path}";
+                }
+
+                if (btn != null)
+                {
+                    btn.clickable = null;
+                    var capturedPath = cf.Path;
+                    var capturedHash = _selectedCommitHash;
+                    btn.clicked += () => _ = ExtractCommitFileAsync(capturedHash, capturedPath);
+                }
+            };
+            _commitFilesList.Rebuild();
         }
 
         private void CopyCommitHash()
@@ -517,6 +598,47 @@ namespace ProjectC.LoreUnity
             {
                 EditorGUIUtility.systemCopyBuffer = _selectedCommitHash;
                 SetStatus($"Copied: {_selectedCommitHash.Substring(0, 7)}");
+            }
+        }
+
+        private async Task ExtractCommitFileAsync(string hash, string path)
+        {
+            if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(path))
+                return;
+
+            // Determine a default file name
+            var fileName = System.IO.Path.GetFileName(path);
+            var savePath = EditorUtility.SaveFilePanel(
+                "Save file from commit " + hash.Substring(0, 7),
+                "",
+                fileName,
+                "");
+
+            if (string.IsNullOrEmpty(savePath)) return;
+
+            SetStatus($"Extracting {path} from commit {hash.Substring(0, 7)}...");
+            var content = await LoreCliService.GetCommitFileContentAsync(hash, path);
+            if (content == null)
+            {
+                EditorUtility.DisplayDialog("Extract Failed",
+                    $"Could not get content of {path} at commit {hash.Substring(0, 7)}.",
+                    "OK");
+                SetStatus("Extract failed");
+                return;
+            }
+
+            try
+            {
+                System.IO.File.WriteAllText(savePath, content);
+                SetStatus($"Saved: {savePath}");
+                EditorUtility.RevealInFinder(savePath);
+            }
+            catch (Exception ex)
+            {
+                EditorUtility.DisplayDialog("Save Failed",
+                    $"Could not write file:\n{ex.Message}",
+                    "OK");
+                SetStatus("Extract failed");
             }
         }
 

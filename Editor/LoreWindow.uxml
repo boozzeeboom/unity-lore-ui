@@ -47,6 +47,8 @@
                     <ui:Button text="Copy Hash" name="copy-hash-btn" class="detail-btn" />
                     <ui:Button text="Revert" name="revert-btn" class="detail-btn" style="background-color: #c0392b;" />
                 </ui:VisualElement>
+                <ui:Label text="Changed Files:" name="commit-files-label" class="section-label" style="margin-top: 4px;" />
+                <ui:ListView name="commit-files-list" class="commit-files-list" />
             </ui:VisualElement>
         </ui:VisualElement>
 
