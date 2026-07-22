@@ -8,13 +8,14 @@
     font-size: 12px;
 }
 
-/* ── Toolbar ── */
+/* ── Toolbars ── */
 .toolbar-bar {
     flex-direction: row;
     align-items: center;
     background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
     border-bottom-width: 1px;
+    flex-shrink: 0;
 }
 
 #toolbar {
@@ -41,44 +42,6 @@
     color: #e74c3c;
 }
 
-/* ── Tab bar ── */
-#tab-bar {
-    padding: 0;
-}
-
-.tab-toggle {
-    font-size: 11px;
-    padding: 4px 12px;
-    margin: 0;
-    border-left-width: 0;
-    border-right-width: 0;
-    border-top-width: 0;
-    border-bottom-width: 0;
-    background-color: transparent;
-    color: var(--unity-colors-toolbar-text, #999);
-    -unity-text-align: middle-center;
-}
-
-/* Hide the default checkbox graphic for tab toggles */
-.tab-toggle .unity-toggle__input {
-    display: none;
-}
-
-.tab-toggle:checked {
-    color: var(--unity-colors-toolbar-text, #fff);
-    border-bottom-color: #4ec9b0;
-    border-bottom-width: 2px;
-    background-color: rgba(78, 201, 176, 0.08);
-}
-
-/* ── Panels ── */
-.tab-panel {
-    flex-grow: 1;
-    padding: 4px;
-    overflow: scroll;
-}
-
-/* ── Toolbar buttons (replacement for removed ToolbarButton) ── */
 .toolbar-button {
     font-size: 11px;
     padding: 2px 8px;
@@ -96,32 +59,70 @@
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-.summary-label {
-    padding: 4px 6px;
-    font-size: 11px;
-    color: #888;
-    border-bottom-color: var(--unity-colors-list-view-border, #3a3a3a);
-    border-bottom-width: 1px;
-    margin-bottom: 4px;
+/* ── Tab bar ── */
+#tab-bar {
+    padding: 0;
 }
 
-/* ── Status tab: file list ── */
+.tab-toggle {
+    font-size: 11px;
+    padding: 4px 12px;
+    margin: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    background-color: transparent;
+    -unity-text-align: middle-center;
+}
+
+/* Toggle label must inherit color from parent .tab-toggle */
+.tab-toggle .unity-toggle__label {
+    color: var(--unity-colors-toolbar-text, #999);
+}
+
+.tab-toggle:checked .unity-toggle__label {
+    color: #fff;
+}
+
+/* Hide checkbox graphic */
+.tab-toggle .unity-toggle__input {
+    display: none;
+}
+
+.tab-toggle:checked {
+    border-bottom-color: #4ec9b0;
+    border-bottom-width: 2px;
+    background-color: rgba(78, 201, 176, 0.08);
+}
+
+/* ── Content panels (fill window between tab-bar and status-bar) ── */
+.tab-panel {
+    flex-grow: 1;
+    padding: 4px;
+    /* NO overflow:scroll — breaks flex-grow children */
+}
+
+/* ── Status tab ── */
+#status-panel {
+    flex-direction: column;
+    min-height: 0;
+}
 .file-list {
     flex-grow: 1;
+    min-height: 40px;
 }
-
 .file-list .unity-list-view__item {
     padding: 2px 4px;
     font-size: 11px;
     border-bottom-color: rgba(255, 255, 255, 0.04);
     border-bottom-width: 1px;
 }
-
 .file-list .unity-list-view__item:hover {
     background-color: rgba(255, 255, 255, 0.04);
 }
 
-/* ── Status tab: commit area ── */
+/* ── Commit area (bottom of status tab) ── */
 #commit-area {
     flex-direction: row;
     padding: 4px;
@@ -131,75 +132,65 @@
     border-top-width: 1px;
     background-color: var(--unity-colors-toolbar-background, #2d2d2d);
 }
-
 #commit-message {
     flex-grow: 1;
     min-height: 22px;
     font-size: 11px;
     margin-right: 4px;
 }
-
 .action-btn {
     font-size: 11px;
     padding: 3px 12px;
     margin: 0 2px;
     min-width: 80px;
+    flex-shrink: 0;
 }
-
 .commit-btn {
     background-color: #27ae60;
     color: #fff;
 }
-
 .commit-btn:hover {
     background-color: #2ecc71;
 }
 
-/* ── History tab: commit list ── */
+/* ── History tab ── */
 #history-panel {
-    overflow: hidden;
+    flex-direction: column;
 }
 
 .commit-list {
     flex-grow: 1;
+    min-height: 40px;
 }
-
 .commit-list .unity-list-view__item {
     padding: 4px 6px;
     font-size: 11px;
     border-bottom-color: rgba(255, 255, 255, 0.04);
     border-bottom-width: 1px;
 }
-
-/* Unpushed commits — yellow accent */
-.commit-list .unity-list-view__item.commit-unpushed,
-.commit-list .unity-list-view__item:selected.commit-unpushed {
-    color: #ffd700;
-}
-
 .commit-list .unity-list-view__item:selected {
     background-color: rgba(78, 201, 176, 0.15);
     color: #e0e0e0;
 }
-
 .commit-list .unity-list-view__item:hover {
     background-color: rgba(78, 201, 176, 0.06);
 }
-
+.commit-list .unity-list-view__item.commit-unpushed,
+.commit-list .unity-list-view__item:selected.commit-unpushed {
+    color: #ffd700;
+}
 .commit-detail {
     border-top-color: var(--unity-colors-list-view-border, #3a3a3a);
     border-top-width: 1px;
     padding: 6px;
     flex-shrink: 0;
-    min-height: 60px;
+    min-height: 50px;
 }
-
 .detail-text {
     font-size: 11px;
     white-space: pre-wrap;
     color: var(--unity-colors-editor-text, #ccc);
 }
-
 .detail-btn {
     font-size: 10px;
     padding: 2px 8px;
@@ -207,13 +198,15 @@
 }
 
 /* ── Branches tab ── */
+#branches-panel {
+    flex-direction: column;
+}
 #branches-toolbar {
     flex-direction: row;
     margin-bottom: 4px;
     border-bottom-width: 0;
     background-color: transparent;
 }
-
 .section-label {
     font-size: 11px;
     -unity-font-style: bold;
@@ -223,18 +216,19 @@
     border-bottom-width: 1px;
     margin-top: 4px;
 }
-
 .branch-list {
     max-height: 120px;
     margin-bottom: 4px;
 }
-
 .branch-list .unity-list-view__item {
     padding: 2px 6px;
     font-size: 11px;
 }
 
 /* ── Diff tab ── */
+#diff-panel {
+    flex-direction: column;
+}
 #diff-toolbar {
     flex-direction: row;
     padding: 2px 4px;
@@ -243,7 +237,6 @@
     flex-grow: 1;
     background-color: #1e1e1e;
 }
-
 .diff-text {
     font-size: 11px;
     white-space: pre;
@@ -251,7 +244,7 @@
     padding: 4px;
 }
 
-/* ── Window status bar (always visible) ── */
+/* ── Bottom status bar ── */
 .window-status-bar {
     font-size: 10px;
     padding: 1px 6px;
@@ -261,4 +254,14 @@
     border-top-width: 1px;
     flex-shrink: 0;
     min-height: 14px;
+}
+
+/* ── Shared label ── */
+.summary-label {
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #888;
+    border-bottom-color: var(--unity-colors-list-view-border, #3a3a3a);
+    border-bottom-width: 1px;
+    margin-bottom: 4px;
 }
