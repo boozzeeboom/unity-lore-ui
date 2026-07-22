@@ -4,10 +4,13 @@
   "displayName": "Lore VCS for Unity",
   "description": "Unity Editor integration for EpicGames/Lore version control system. Install server, manage repositories, commit, push, branch, diff — all inside Unity Editor.",
   "unity": "6000.0",
-  "unityRelease": "0f1",
   "author": {
     "name": "Project C: The Clouds",
     "url": "https://github.com/boozzeeboom/unity-lore-ui"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/boozzeeboom/unity-lore-ui.git"
   },
   "keywords": [
     "vcs",
@@ -16,6 +19,5 @@
     "editor-tools",
     "projectc"
   ],
-  "type": "tool",
-  "hideInEditor": false
+  "type": "tool"
 }

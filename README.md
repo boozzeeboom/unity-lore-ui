@@ -9,7 +9,7 @@ Window → Package Manager → + → Add package from git URL
 ```
 
 ```
-https://github.com/boozzeeboom/unity-lore-ui.git?path=/com.projectc.lore-unity
+https://github.com/boozzeeboom/unity-lore-ui.git
 ```
 
 ## Быстрый старт
