@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
-using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -131,37 +130,37 @@ namespace ProjectC.LoreUnity
             var root = rootVisualElement;
 
             // Refresh button
-            root.Q<ToolbarButton>("refresh-btn").clicked += () => _ = RefreshAllAsync();
+            root.Q<Button>("refresh-btn").clicked += () => _ = RefreshAllAsync();
 
             // Scan button
-            root.Q<ToolbarButton>("scan-btn").clicked += () => _ = ScanForServersAsync();
+            root.Q<Button>("scan-btn").clicked += () => _ = ScanForServersAsync();
 
             // Settings button
-            root.Q<ToolbarButton>("settings-btn").clicked += () =>
+            root.Q<Button>("settings-btn").clicked += () =>
             {
                 SettingsService.OpenUserPreferences("Preferences/Lore");
             };
 
             // Tab toggles
-            root.Q<ToolbarToggle>("tab-status").RegisterValueChangedCallback(evt =>
+            root.Q<Toggle>("tab-status").RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue) SwitchTab("status");
             });
-            root.Q<ToolbarToggle>("tab-history").RegisterValueChangedCallback(evt =>
+            root.Q<Toggle>("tab-history").RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue) SwitchTab("history");
             });
-            root.Q<ToolbarToggle>("tab-branches").RegisterValueChangedCallback(evt =>
+            root.Q<Toggle>("tab-branches").RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue) SwitchTab("branches");
             });
-            root.Q<ToolbarToggle>("tab-diff").RegisterValueChangedCallback(evt =>
+            root.Q<Toggle>("tab-diff").RegisterValueChangedCallback(evt =>
             {
                 if (evt.newValue) SwitchTab("diff");
             });
 
             // Default: status tab active
-            var statusToggle = root.Q<ToolbarToggle>("tab-status");
+            var statusToggle = root.Q<Toggle>("tab-status");
             statusToggle.SetValueWithoutNotify(true);
 
             // Commit
@@ -181,9 +180,9 @@ namespace ProjectC.LoreUnity
             root.Q<Button>("revert-btn").clicked += () => _ = RevertCommitAsync();
 
             // Branch actions
-            root.Q<ToolbarButton>("new-branch-btn").clicked += () => _ = PromptCreateBranchAsync();
-            root.Q<ToolbarButton>("switch-branch-btn").clicked += () => _ = PromptSwitchBranchAsync();
-            root.Q<ToolbarButton>("merge-branch-btn").clicked += () => _ = PromptMergeBranchAsync();
+            root.Q<Button>("new-branch-btn").clicked += () => _ = PromptCreateBranchAsync();
+            root.Q<Button>("switch-branch-btn").clicked += () => _ = PromptSwitchBranchAsync();
+            root.Q<Button>("merge-branch-btn").clicked += () => _ = PromptMergeBranchAsync();
 
             // File list selection → diff
             _fileList.selectionChanged += OnFileSelected;
@@ -203,10 +202,10 @@ namespace ProjectC.LoreUnity
 
             // Update toggle states
             var root = rootVisualElement;
-            root.Q<ToolbarToggle>("tab-status").SetValueWithoutNotify(tab == "status");
-            root.Q<ToolbarToggle>("tab-history").SetValueWithoutNotify(tab == "history");
-            root.Q<ToolbarToggle>("tab-branches").SetValueWithoutNotify(tab == "branches");
-            root.Q<ToolbarToggle>("tab-diff").SetValueWithoutNotify(tab == "diff");
+            root.Q<Toggle>("tab-status").SetValueWithoutNotify(tab == "status");
+            root.Q<Toggle>("tab-history").SetValueWithoutNotify(tab == "history");
+            root.Q<Toggle>("tab-branches").SetValueWithoutNotify(tab == "branches");
+            root.Q<Toggle>("tab-diff").SetValueWithoutNotify(tab == "diff");
         }
 
         // ── Refresh ──

@@ -5,7 +5,7 @@
   "description": "Unity Editor integration for EpicGames/Lore version control system. Install server, manage repositories, commit, push, branch, diff — all inside Unity Editor.",
   "unity": "6000.0",
   "author": {
-    "name": "Project C: The Clouds",
+    "name": "Thegravity.ru",
     "url": "https://github.com/boozzeeboom/unity-lore-ui"
   },
   "repository": {

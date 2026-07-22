@@ -1,22 +1,24 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements">
     <ui:VisualElement name="lore-window">
-        <ui:Toolbar name="toolbar">
+        <!-- Top toolbar -->
+        <ui:VisualElement name="toolbar" class="toolbar-bar">
             <ui:Label text="Lore VCS" name="toolbar-title" />
-            <ui:ToolbarSpacer />
+            <ui:VisualElement style="flex-grow: 1;" />
             <ui:Label name="branch-label" text="—" tooltip="Current branch" />
-            <ui:ToolbarSpacer />
+            <ui:VisualElement style="flex-grow: 1;" />
             <ui:Label name="server-status" text="●" tooltip="Server status" />
-            <ui:ToolbarButton text="↻" name="refresh-btn" tooltip="Refresh" />
-            <ui:ToolbarButton text="⊞" name="scan-btn" tooltip="Scan for Lore servers" />
-            <ui:ToolbarButton text="⚙" name="settings-btn" tooltip="Settings" />
-        </ui:Toolbar>
+            <ui:Button text="↻" name="refresh-btn" class="toolbar-button" tooltip="Refresh" />
+            <ui:Button text="⊞" name="scan-btn" class="toolbar-button" tooltip="Scan for Lore servers" />
+            <ui:Button text="⚙" name="settings-btn" class="toolbar-button" tooltip="Settings" />
+        </ui:VisualElement>
 
-        <ui:Toolbar name="tab-bar">
-            <ui:ToolbarToggle name="tab-status" text="Status" class="tab-toggle" />
-            <ui:ToolbarToggle name="tab-history" text="History" class="tab-toggle" />
-            <ui:ToolbarToggle name="tab-branches" text="Branches" class="tab-toggle" />
-            <ui:ToolbarToggle name="tab-diff" text="Diff" class="tab-toggle" />
-        </ui:Toolbar>
+        <!-- Tab bar -->
+        <ui:VisualElement name="tab-bar" class="toolbar-bar">
+            <ui:Toggle name="tab-status" text="Status" class="tab-toggle" />
+            <ui:Toggle name="tab-history" text="History" class="tab-toggle" />
+            <ui:Toggle name="tab-branches" text="Branches" class="tab-toggle" />
+            <ui:Toggle name="tab-diff" text="Diff" class="tab-toggle" />
+        </ui:VisualElement>
 
         <!-- Status tab -->
         <ui:VisualElement name="status-panel" class="tab-panel">
@@ -44,11 +46,11 @@
 
         <!-- Branches tab -->
         <ui:VisualElement name="branches-panel" class="tab-panel" style="display: none;">
-            <ui:Toolbar name="branches-toolbar">
-                <ui:ToolbarButton text="+ New Branch" name="new-branch-btn" />
-                <ui:ToolbarButton text="Switch" name="switch-branch-btn" />
-                <ui:ToolbarButton text="Merge" name="merge-branch-btn" />
-            </ui:Toolbar>
+            <ui:VisualElement name="branches-toolbar" class="toolbar-bar">
+                <ui:Button text="+ New Branch" name="new-branch-btn" class="toolbar-button" />
+                <ui:Button text="Switch" name="switch-branch-btn" class="toolbar-button" />
+                <ui:Button text="Merge" name="merge-branch-btn" class="toolbar-button" />
+            </ui:VisualElement>
             <ui:Label text="Local Branches" class="section-label" />
             <ui:ListView name="local-branch-list" class="branch-list" />
             <ui:Label text="Remote Branches" class="section-label" />
@@ -57,9 +59,9 @@
 
         <!-- Diff tab -->
         <ui:VisualElement name="diff-panel" class="tab-panel" style="display: none;">
-            <ui:Toolbar name="diff-toolbar">
+            <ui:VisualElement name="diff-toolbar" class="toolbar-bar">
                 <ui:Label name="diff-file-label" text="Select a file to diff" />
-            </ui:Toolbar>
+            </ui:VisualElement>
             <ui:ScrollView name="diff-content" class="diff-scroll">
                 <ui:Label name="diff-text" text="—" class="diff-text" />
             </ui:ScrollView>

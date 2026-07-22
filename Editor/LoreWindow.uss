@@ -28,7 +28,6 @@
     padding: 2px 8px;
     font-size: 11px;
     color: #4ec9b0;
-    font-family: monospace;
 }
 
 #server-status {
@@ -54,6 +53,12 @@
     border-bottom-width: 0;
     background-color: transparent;
     color: var(--unity-colors-toolbar-text, #999);
+    -unity-text-align: middle-center;
+}
+
+/* Hide the default checkbox graphic for tab toggles */
+.tab-toggle .unity-toggle__input {
+    display: none;
 }
 
 .tab-toggle:checked {
@@ -68,6 +73,24 @@
     flex-grow: 1;
     padding: 4px;
     overflow: scroll;
+}
+
+/* ── Toolbar buttons (replacement for removed ToolbarButton) ── */
+.toolbar-button {
+    font-size: 11px;
+    padding: 2px 8px;
+    margin: 0 1px;
+    min-width: 24px;
+    background-color: transparent;
+    border-left-width: 0;
+    border-right-width: 0;
+    border-top-width: 0;
+    border-bottom-width: 0;
+    color: var(--unity-colors-toolbar-text, #d4d4d4);
+    -unity-text-align: middle-center;
+}
+.toolbar-button:hover {
+    background-color: rgba(255, 255, 255, 0.08);
 }
 
 .summary-label {
@@ -87,7 +110,6 @@
 .file-list .unity-list-view__item {
     padding: 2px 4px;
     font-size: 11px;
-    font-family: monospace;
     border-bottom-color: rgba(255, 255, 255, 0.04);
     border-bottom-width: 1px;
 }
@@ -157,7 +179,6 @@
 .branch-list .unity-list-view__item {
     padding: 2px 6px;
     font-size: 11px;
-    font-family: monospace;
 }
 
 /* ── Diff ── */
@@ -168,7 +189,6 @@
 
 .diff-text {
     font-size: 11px;
-    font-family: monospace;
     white-space: pre;
     color: #d4d4d4;
     padding: 4px;
