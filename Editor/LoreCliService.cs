@@ -242,7 +242,8 @@ namespace ProjectC.LoreUnity
         }
 
         /// <summary>
-        /// Get files changed in a specific commit (via diff with parent).
+        /// Get files changed in a specific commit using `lore revision diff`.
+        /// Format: "M path" / "A path" / "D path" — one line per file.
         /// Returns empty list on error or no parent (single-root commit).
         /// </summary>
         public static async Task<List<LoreCommitFile>> GetCommitFilesAsync(LoreCommit commit)
@@ -250,28 +251,18 @@ namespace ProjectC.LoreUnity
             if (commit == null || string.IsNullOrEmpty(commit.ParentSignature))
                 return new List<LoreCommitFile>();
 
-            var diff = await GetDiffAsync(source: commit.ParentSignature, target: commit.Signature);
-            if (string.IsNullOrEmpty(diff))
+            // Use lore revision diff (subcommand) — gives file list with M/A/D prefix
+            var args = new[] {
+                "revision", "diff",
+                commit.ParentSignature,
+                "--target", commit.Signature
+            };
+
+            var (code, output) = await ExecuteAsync(args);
+            if (code != 0 || string.IsNullOrWhiteSpace(output))
                 return new List<LoreCommitFile>();
 
-            return LoreCliParser.ParseCommitDiffFiles(diff);
-        }
-
-        /// <summary>
-        /// Try to get raw file content at a specific commit revision.
-        /// Uses `lore show <hash>:<path>` or falls back to diff output.
-        /// Returns null on failure.
-        /// </summary>
-        public static async Task<string> GetCommitFileContentAsync(string hash, string path)
-        {
-            // Try show command first
-            var (code, output) = await ExecuteAsync("show", $"{hash}:{path}");
-            if (code == 0 && !string.IsNullOrWhiteSpace(output))
-                return output;
-
-            // Fallback: get the diff for this single file
-            var diff = await GetDiffAsync(path: path, source: $"{hash}^", target: hash);
-            return diff;
+            return LoreCliParser.ParseCommitDiffFiles(output);
         }
 
         public static async Task<(bool Success, string Output)> StageAllAsync()

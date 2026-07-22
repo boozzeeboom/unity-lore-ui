@@ -574,10 +574,7 @@ namespace ProjectC.LoreUnity
                         LoreFileStatusType.Deleted => "🔴",
                         _ => "🟡"
                     };
-                    var stat = cf.Additions > 0 || cf.Deletions > 0
-                        ? $" (+{cf.Additions}/-{cf.Deletions})"
-                        : "";
-                    label.text = $"{icon} {cf.Path}{stat}";
+                    label.text = $"{icon} {cf.Path}";
                     label.tooltip = $"{cf.Status}: {cf.Path}";
                 }
 
@@ -606,40 +603,24 @@ namespace ProjectC.LoreUnity
             if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(path))
                 return;
 
-            // Determine a default file name
-            var fileName = System.IO.Path.GetFileName(path);
-            var savePath = EditorUtility.SaveFilePanel(
-                "Save file from commit " + hash.Substring(0, 7),
-                "",
-                fileName,
-                "");
+            // Lore CLI does not provide a "show hash:path" command in this version.
+            // Show the diff for the file at this commit instead.
+            SetStatus($"Loading diff for {path} at {hash.Substring(0, 7)}...");
 
-            if (string.IsNullOrEmpty(savePath)) return;
-
-            SetStatus($"Extracting {path} from commit {hash.Substring(0, 7)}...");
-            var content = await LoreCliService.GetCommitFileContentAsync(hash, path);
-            if (content == null)
+            var diff = await LoreCliService.GetDiffAsync(path: path, source: hash);
+            if (string.IsNullOrEmpty(diff))
             {
-                EditorUtility.DisplayDialog("Extract Failed",
-                    $"Could not get content of {path} at commit {hash.Substring(0, 7)}.",
+                EditorUtility.DisplayDialog("Extract Not Available",
+                    $"Lore CLI does not provide a 'show {hash}:{path}' command in this version.\n" +
+                    "Showing the file diff instead — save manually if needed.",
                     "OK");
-                SetStatus("Extract failed");
-                return;
             }
 
-            try
-            {
-                System.IO.File.WriteAllText(savePath, content);
-                SetStatus($"Saved: {savePath}");
-                EditorUtility.RevealInFinder(savePath);
-            }
-            catch (Exception ex)
-            {
-                EditorUtility.DisplayDialog("Save Failed",
-                    $"Could not write file:\n{ex.Message}",
-                    "OK");
-                SetStatus("Extract failed");
-            }
+            // Switch to Diff tab with this file's diff
+            SwitchTab("diff");
+            _diffFileLabel.text = $"{path}  @  {hash.Substring(0, 7)}";
+            _diffText.text = diff ?? "(no diff available)";
+            SetStatus("Diff loaded");
         }
 
         private async Task RevertCommitAsync()

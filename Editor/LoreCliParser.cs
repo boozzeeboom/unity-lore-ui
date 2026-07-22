@@ -430,63 +430,44 @@ namespace ProjectC.LoreUnity
         }
 
         /// <summary>
-        /// Parse `lore diff --source P --target C` output into a list of changed files
-        /// with status and +/- line counts.
+        /// Parse `lore revision diff <source> --target <target>` output.
+        /// Each line is "<status_letter> <path>" (one file per line, no hunks).
+        /// Example: "M Packages/packages-lock.json"
         /// </summary>
         public static List<LoreCommitFile> ParseCommitDiffFiles(string text)
         {
             if (string.IsNullOrEmpty(text)) return new List<LoreCommitFile>();
 
             var result = new List<LoreCommitFile>();
-            // Split by file blocks: each block starts with a line like "--- <path>" or "--- a/<path>"
-            var blocks = Regex.Split(text, @"(?=^---\s+)", RegexOptions.Multiline);
-
-            foreach (var block in blocks)
+            foreach (var line in text.Split('\n'))
             {
-                var trimmed = block.Trim();
+                var trimmed = line.TrimEnd('\r');
                 if (string.IsNullOrEmpty(trimmed)) continue;
 
-                // Extract paths
-                var oldPathMatch = Regex.Match(trimmed, @"^---\s+(.+)$", RegexOptions.Multiline);
-                var newPathMatch = Regex.Match(trimmed, @"^\+\+\+\s+(.+)$", RegexOptions.Multiline);
+                // Format: "M path" or "A path" or "D path"
+                // Path may contain spaces, so split only on first whitespace
+                if (trimmed.Length < 2) continue;
 
-                if (!newPathMatch.Success) continue;
+                char statusChar = trimmed[0];
+                if (statusChar != 'M' && statusChar != 'A' && statusChar != 'D')
+                    continue;
 
-                var oldPath = oldPathMatch.Success ? oldPathMatch.Groups[1].Value.Trim() : "";
-                var newPath = newPathMatch.Groups[1].Value.Trim();
+                var path = trimmed.Substring(1).TrimStart();
+                if (string.IsNullOrEmpty(path)) continue;
 
-                // Normalize: skip /dev/null entries as path
-                var displayPath = newPath;
-                if (displayPath.StartsWith("b/")) displayPath = displayPath.Substring(2);
-                if (displayPath.StartsWith("a/")) displayPath = displayPath.Substring(2);
-                if (displayPath == "/dev/null" || displayPath == "dev/null")
-                    displayPath = oldPath.StartsWith("a/") ? oldPath.Substring(2) : oldPath;
-                if (displayPath == "/dev/null" || displayPath == "dev/null") continue;
-
-                // Determine status
-                var isNew = oldPath.Contains("/dev/null") || oldPath == "dev/null";
-                var isDeleted = newPath.Contains("/dev/null") || newPath == "dev/null";
-                var status = isNew ? LoreFileStatusType.Added
-                          : isDeleted ? LoreFileStatusType.Deleted
-                          : LoreFileStatusType.Modified;
-
-                // Count +/- lines (only in hunk lines starting with + or -, not the ---/+++ headers)
-                int additions = 0, deletions = 0;
-                var lines = trimmed.Split('\n');
-                foreach (var line in lines)
+                var status = statusChar switch
                 {
-                    if (line.StartsWith("+") && !line.StartsWith("+++"))
-                        additions++;
-                    else if (line.StartsWith("-") && !line.StartsWith("---"))
-                        deletions++;
-                }
+                    'A' => LoreFileStatusType.Added,
+                    'D' => LoreFileStatusType.Deleted,
+                    _ => LoreFileStatusType.Modified,
+                };
 
                 result.Add(new LoreCommitFile
                 {
-                    Path = displayPath,
+                    Path = path,
                     Status = status,
-                    Additions = additions,
-                    Deletions = deletions
+                    Additions = 0,
+                    Deletions = 0
                 });
             }
 
