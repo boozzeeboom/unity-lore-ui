@@ -1,3 +1,4 @@
+using System.Linq;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -21,7 +22,7 @@ namespace ProjectC.LoreUnity
                 {
                     var prefs = new VisualElement
                     {
-                        style = { padding = 10 }
+                        style = { paddingTop = 10, paddingBottom = 10, paddingLeft = 10, paddingRight = 10 }
                     };
 
                     // ── Lore Executable ──
@@ -69,11 +70,13 @@ namespace ProjectC.LoreUnity
                     serverUrlField.RegisterValueChangedCallback(evt => LoreSettings.ServerUrl = evt.newValue);
                     prefs.Add(serverUrlField);
 
+                    // Scan button
                     var scanBtnRow = new VisualElement
                     {
                         style = { flexDirection = FlexDirection.Row, marginTop = 4 }
                     };
-                    var scanBtn = new Button(async () =>
+                    Button scanBtn = null; // declare before use in lambda
+                    scanBtn = new Button(async () =>
                     {
                         scanBtn.text = "Scanning...";
                         scanBtn.SetEnabled(false);
@@ -162,14 +165,14 @@ namespace ProjectC.LoreUnity
                     var statusBox = new VisualElement
                     {
                         style = { backgroundColor = new Color(0.15f, 0.15f, 0.15f),
-                                   padding = 8, marginTop = 8 }
+                                  paddingTop = 8, paddingBottom = 8, paddingLeft = 8, paddingRight = 8, marginTop = 8 }
                     };
-                    statusBox.Add(new Label("Status") { style = { fontSize = 11, bold = true } });
+                    statusBox.Add(new Label("Status") { style = { fontSize = 11, unityFontStyleAndWeight = FontStyle.Bold } });
 
                     var lorePath = LoreCliService.ResolveLorePath();
-                    var serverPath = LoreCliService.ResolveServerPath();
-                    statusBox.Add(new Label($"Lore: {(lorePath ?? "NOT FOUND"):blue}"));
-                    statusBox.Add(new Label($"Server: {(serverPath ?? "NOT FOUND"):blue}"));
+                    var svrPath = LoreCliService.ResolveServerPath();
+                    statusBox.Add(new Label($"Lore: {(lorePath ?? "NOT FOUND")}"));
+                    statusBox.Add(new Label($"Server: {(svrPath ?? "NOT FOUND")}"));
 
                     prefs.Add(statusBox);
 

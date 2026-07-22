@@ -26,7 +26,7 @@ namespace ProjectC.LoreUnity.Tests.Editor
 
         [Test]
         [Explicit("Requires lore.exe in PATH")]
-        public async Task FindLoreInPath_ReturnsPath()
+        public void FindLoreInPath_ReturnsPath()
         {
             var path = LoreCliService.FindLoreInPath();
             Assert.IsNotNull(path, "lore.exe should be found in PATH");

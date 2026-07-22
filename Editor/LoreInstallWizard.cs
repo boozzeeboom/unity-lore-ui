@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
@@ -29,7 +30,8 @@ namespace ProjectC.LoreUnity
         private ProgressBar _progressBar;
         private Button _actionBtn;
         private Button _closeBtn;
-        private VisualElement _detailsBox;
+        private ScrollView _detailsScroll;
+        private VisualElement _detailsContent;
         private VisualElement _scanResultBox;
 
         private int _currentStep;
@@ -42,32 +44,40 @@ namespace ProjectC.LoreUnity
             root.Add(new Label("Lore VCS Setup Wizard")
             {
                 style = { fontSize = 18, unityFontStyleAndWeight = FontStyle.Bold,
-                          padding = 10, marginBottom = 6 }
+                          paddingTop = 10, paddingBottom = 10, paddingLeft = 10, paddingRight = 10,
+                          marginBottom = 6 }
             });
 
-            _stepLabel = new Label("Step 1: Check Lore CLI") { style = { padding = 4, fontSize = 13 } };
+            _stepLabel = new Label("Step 1: Check Lore CLI")
+            {
+                style = { paddingTop = 4, paddingBottom = 4, paddingLeft = 4, paddingRight = 4, fontSize = 13 }
+            };
             root.Add(_stepLabel);
 
-            _progressBar = new ProgressBar { value = 0, style = { height = 6, margin = 4 } };
+            _progressBar = new ProgressBar { value = 0, style = { height = 6, marginLeft = 4, marginRight = 4, marginTop = 4, marginBottom = 4 } };
             root.Add(_progressBar);
 
             // Scrollable details
-            _detailsBox = new VisualElement
+            _detailsScroll = new ScrollView(ScrollViewMode.Vertical)
             {
                 style = { backgroundColor = new Color(0.12f, 0.12f, 0.12f),
-                          padding = 8, margin = 4, minHeight = 140,
-                          whiteSpace = WhiteSpace.Normal, overflow = Overflow.Hidden }
+                          paddingTop = 8, paddingBottom = 8, paddingLeft = 8, paddingRight = 8,
+                          marginLeft = 4, marginRight = 4, marginTop = 4, marginBottom = 4,
+                          minHeight = 140, maxHeight = 260 }
             };
-            _detailsBox.Add(new Label("Checking for Lore CLI..."));
-            root.Add(_detailsBox);
+            _detailsContent = new VisualElement();
+            _detailsContent.Add(new Label("Checking for Lore CLI..."));
+            _detailsScroll.Add(_detailsContent);
+            root.Add(_detailsScroll);
 
             // Scan result list (hidden by default)
             _scanResultBox = new VisualElement
             {
                 style = { display = DisplayStyle.None,
                           backgroundColor = new Color(0.1f, 0.1f, 0.1f),
-                          padding = 6, margin = 4, minHeight = 60,
-                          maxHeight = 160, overflow = Overflow.Auto }
+                          paddingTop = 6, paddingBottom = 6, paddingLeft = 6, paddingRight = 6,
+                          marginLeft = 4, marginRight = 4, marginTop = 4, marginBottom = 4,
+                          minHeight = 60, maxHeight = 160, overflow = Overflow.Hidden }
             };
             root.Add(_scanResultBox);
 
@@ -75,7 +85,8 @@ namespace ProjectC.LoreUnity
             var btnRow = new VisualElement
             {
                 style = { flexDirection = FlexDirection.Row, justifyContent = Justify.FlexEnd,
-                          padding = 6, marginTop = 8 }
+                          paddingTop = 6, paddingBottom = 6, paddingLeft = 6, paddingRight = 6,
+                          marginTop = 8 }
             };
 
             _actionBtn = new Button(RunNextStep) { text = "Start", style = { width = 130 } };
@@ -119,10 +130,9 @@ namespace ProjectC.LoreUnity
             if (lorePath != null)
             {
                 Log($"✓ Found lore.exe at: {lorePath}");
-                var (code, outText) = await LoreCliService.ExecuteAsync("--version");
-                Log(code == 0 ? "✓ lore.exe responds" : "⚠ lore.exe found but has errors");
-                // Dump version if available
-                var versionLine = outText?.Split('\n').FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
+                var result = await LoreCliService.ExecuteAsync("--version");
+                Log(result.ExitCode == 0 ? "✓ lore.exe responds" : "⚠ lore.exe found but has errors");
+                var versionLine = result.Output?.Split('\n').FirstOrDefault(l => !string.IsNullOrWhiteSpace(l));
                 if (!string.IsNullOrEmpty(versionLine) && !versionLine.StartsWith("["))
                     Log($"  Version: {versionLine.Trim()}");
             }
@@ -154,7 +164,6 @@ namespace ProjectC.LoreUnity
                 return;
             }
 
-            // Show results
             _scanResultBox.style.display = DisplayStyle.Flex;
             _scanResultBox.Clear();
 
@@ -171,7 +180,7 @@ namespace ProjectC.LoreUnity
                 selectionType = SelectionType.Single,
                 style = { flexGrow = 1 }
             };
-            list.makeItem = () => new Label { style = { fontSize = 11, padding = 2 } };
+            list.makeItem = () => new Label { style = { fontSize = 11, paddingTop = 2, paddingBottom = 2, paddingLeft = 2, paddingRight = 2 } };
             list.bindItem = (element, i) =>
             {
                 if (element is Label l && i < _foundServers.Count)
@@ -186,16 +195,14 @@ namespace ProjectC.LoreUnity
                 var sel = objects.FirstOrDefault() as LoreServerScanner.ServerCandidate;
                 if (sel != null)
                 {
-                    // Auto-configure server URL from selected candidate
                     LoreSettings.ServerUrl = sel.Url;
                     Log($"→ Selected: {sel.Url}");
 
-                    // If config path found, set server exe path
                     if (!string.IsNullOrEmpty(sel.ConfigPath))
                     {
-                        var parentDir = System.IO.Path.GetDirectoryName(sel.ConfigPath);
-                        var serverExe = System.IO.Path.Combine(parentDir, "loreserver.exe");
-                        if (System.IO.File.Exists(serverExe))
+                        var parentDir = Path.GetDirectoryName(sel.ConfigPath);
+                        var serverExe = Path.Combine(parentDir, "loreserver.exe");
+                        if (File.Exists(serverExe))
                             LoreSettings.ServerExePath = serverExe;
                     }
                 }
@@ -215,29 +222,26 @@ namespace ProjectC.LoreUnity
         {
             _stepLabel.text = "Step 3: Install / Connect";
 
-            // Check if user selected a live server from scan
             var aliveServer = _foundServers?.FirstOrDefault(s => s.IsAlive);
             if (aliveServer != null)
             {
                 Log($"✓ Using live server at {aliveServer.Url}");
                 LoreSettings.ServerUrl = aliveServer.Url;
 
-                // Set lore exe if found nearby
                 if (!string.IsNullOrEmpty(aliveServer.ConfigPath))
                 {
-                    var configDir = System.IO.Path.GetDirectoryName(aliveServer.ConfigPath);
-                    var loreExe = System.IO.Path.Combine(configDir, "lore.exe");
-                    if (!System.IO.File.Exists(loreExe))
-                        loreExe = System.IO.Path.Combine(configDir, "..", "lore.exe");
-                    if (System.IO.File.Exists(loreExe))
-                        LoreSettings.LoreExePath = System.IO.Path.GetFullPath(loreExe);
+                    var configDir = Path.GetDirectoryName(aliveServer.ConfigPath);
+                    var loreExe = Path.Combine(configDir, "lore.exe");
+                    if (!File.Exists(loreExe))
+                        loreExe = Path.Combine(configDir, "..", "lore.exe");
+                    if (File.Exists(loreExe))
+                        LoreSettings.LoreExePath = Path.GetFullPath(loreExe);
                 }
 
                 _actionBtn.text = "Next: Start Server";
                 return;
             }
 
-            // Try to find lore, install if needed
             var lorePath = LoreCliService.ResolveLorePath();
             if (lorePath != null)
             {
@@ -246,7 +250,6 @@ namespace ProjectC.LoreUnity
                 return;
             }
 
-            // Install
             Log("Downloading Lore CLI from GitHub releases...");
             Log("This may take a moment.");
             var (success, message) = await LoreServerManager.DownloadAndInstallAsync();
@@ -275,7 +278,6 @@ namespace ProjectC.LoreUnity
         {
             _stepLabel.text = "Step 4: Start Server";
 
-            // Already alive?
             var alive = await LoreServerManager.HealthCheckAsync();
             if (alive)
             {
@@ -284,7 +286,6 @@ namespace ProjectC.LoreUnity
                 return;
             }
 
-            // Has server exe?
             var serverPath = LoreCliService.ResolveServerPath();
             if (serverPath == null)
             {
@@ -295,7 +296,6 @@ namespace ProjectC.LoreUnity
                 return;
             }
 
-            // Try to start
             Log("Starting loreserver...");
             var started = await LoreServerManager.StartServerAsync();
             if (started)
@@ -314,21 +314,20 @@ namespace ProjectC.LoreUnity
             _stepLabel.text = "Step 5: Repository Path";
 
             var repoPath = LoreSettings.RepoPath;
-            var displayPath = repoPath ?? System.IO.Path.GetDirectoryName(UnityEngine.Application.dataPath);
+            var displayPath = repoPath ?? Path.GetDirectoryName(Application.dataPath);
 
             Log($"Repository path: {displayPath}");
-            var (code, output) = await LoreCliService.ExecuteAsync("status", "--revision-only");
-            if (code == 0)
+            var result = await LoreCliService.ExecuteAsync("status", "--revision-only");
+            if (result.ExitCode == 0)
             {
                 Log("✓ Valid Lore repository.");
-                // Show one-liner status
-                var oneline = output?.Split('\n').FirstOrDefault(l => l.Contains("On branch")) ?? "";
+                var oneline = result.Output?.Split('\n').FirstOrDefault(l => l.Contains("On branch")) ?? "";
                 if (!string.IsNullOrEmpty(oneline)) Log($"  {oneline.Trim()}");
             }
             else
             {
-                Log($"⚠ Not a Lore repository (exit {code}):");
-                var lines = (output ?? "").Split('\n');
+                Log($"⚠ Not a Lore repository (exit {result.ExitCode}):");
+                var lines = (result.Output ?? "").Split('\n');
                 foreach (var l in lines.Take(3))
                     Log($"  {l.Trim()}");
                 Log("");
@@ -373,8 +372,8 @@ namespace ProjectC.LoreUnity
             {
                 style = { fontSize = 11, marginBottom = 2, whiteSpace = WhiteSpace.Normal }
             };
-            _detailsBox.Add(label);
-            _detailsBox.ScrollTo(label);
+            _detailsContent.Add(label);
+            label.BringToFront();
         }
     }
 }

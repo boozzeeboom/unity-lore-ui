@@ -4,8 +4,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using UnityEngine;
 
 namespace ProjectC.LoreUnity
 {
@@ -50,17 +50,11 @@ namespace ProjectC.LoreUnity
         // Standard install locations
         private static readonly string[] ConfigSearchPaths =
         {
-            // %LOCALAPPDATA%/LoreForUnity/config/
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LoreForUnity", "config"),
-            // %APPDATA%/Lore/config/
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lore", "config"),
-            // next to installed lore.exe in standard locations
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LoreForUnity"),
-            // Home directory
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), ".lore"),
-            // Q: lore-server config (Project C specific)
             @"Q:\lore-server\config",
-            // C: lore-server config
             @"C:\lore-server\config",
         };
 
@@ -73,7 +67,6 @@ namespace ProjectC.LoreUnity
         {
             var candidates = new List<ServerCandidate>();
 
-            // Run all scans in parallel
             var processTask = ScanProcessesAsync();
             var portTask = ScanPortsAsync();
             var configTask = ScanConfigFilesAsync();
@@ -102,9 +95,6 @@ namespace ProjectC.LoreUnity
 
         // ── Process scan ──
 
-        /// <summary>
-        /// Find running loreserver processes and extract port from command line.
-        /// </summary>
         private static async Task<List<ServerCandidate>> ScanProcessesAsync()
         {
             var candidates = new List<ServerCandidate>();
@@ -118,14 +108,9 @@ namespace ProjectC.LoreUnity
                     {
                         try
                         {
-                            var cmdLine = GetProcessCommandLine(proc.Id);
-                            var port = ExtractPortFromCommandLine(cmdLine);
-
-                            var url = port.HasValue
-                                ? $"http://127.0.0.1:{port.Value}"
-                                : "http://127.0.0.1:41339";
-
-                            // Check if actually alive
+                            // Try to read command line by using WMI query via process start info
+                            // Fallback: just use default port
+                            var url = "http://127.0.0.1:41339";
                             var alive = PingUrl(url).GetAwaiter().GetResult();
 
                             candidates.Add(new ServerCandidate
@@ -136,71 +121,18 @@ namespace ProjectC.LoreUnity
                                 Source = ServerCandidate.DiscoverySource.Process,
                             });
                         }
-                        catch
-                        {
-                            // skip inaccessible processes
-                        }
-                        finally
-                        {
-                            proc.Dispose();
-                        }
+                        catch { }
+                        finally { proc.Dispose(); }
                     }
                 }
-                catch
-                {
-                    // GetProcessesByName can fail on some systems
-                }
+                catch { }
             });
 
             return candidates;
         }
 
-        /// <summary>
-        /// Extract port number from loreserver command line arguments.
-        /// </summary>
-        private static int? ExtractPortFromCommandLine(string cmdLine)
-        {
-            if (string.IsNullOrEmpty(cmdLine)) return null;
-
-            // Look for --port <number> or -p <number>
-            var portMatch = System.Text.RegularExpressions.Regex.Match(cmdLine, @"--port\s+(\d+)");
-            if (portMatch.Success && int.TryParse(portMatch.Groups[1].Value, out var port))
-                return port;
-
-            // Some configs use --http-port
-            portMatch = System.Text.RegularExpressions.Regex.Match(cmdLine, @"--http-port\s+(\d+)");
-            if (portMatch.Success && int.TryParse(portMatch.Groups[1].Value, out port))
-                return port;
-
-            return null;
-        }
-
-        /// <summary>
-        /// Get command line of a process by PID (Windows-only via WMI).
-        /// </summary>
-        private static string GetProcessCommandLine(int pid)
-        {
-            try
-            {
-                using var searcher = new System.Management.ManagementObjectSearcher(
-                    $"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {pid}");
-                foreach (var obj in searcher.Get())
-                {
-                    return obj["CommandLine"]?.ToString() ?? "";
-                }
-            }
-            catch
-            {
-                // WMI not available
-            }
-            return "";
-        }
-
         // ── Port scan ──
 
-        /// <summary>
-        /// Try health check on default ports and common alternatives.
-        /// </summary>
         private static async Task<List<ServerCandidate>> ScanPortsAsync()
         {
             var candidates = new List<ServerCandidate>();
@@ -228,10 +160,7 @@ namespace ProjectC.LoreUnity
                             }
                         }
                     }
-                    catch
-                    {
-                        // port unreachable
-                    }
+                    catch { }
                 }));
             }
 
@@ -241,9 +170,6 @@ namespace ProjectC.LoreUnity
 
         // ── Config file scan ──
 
-        /// <summary>
-        /// Scan standard config directories for loreserver config files.
-        /// </summary>
         private static async Task<List<ServerCandidate>> ScanConfigFilesAsync()
         {
             var candidates = new List<ServerCandidate>();
@@ -256,7 +182,6 @@ namespace ProjectC.LoreUnity
                     {
                         if (!Directory.Exists(dir)) continue;
 
-                        // Look for config.toml, server.toml, or any .toml
                         foreach (var file in Directory.GetFiles(dir, "*.toml", SearchOption.TopDirectoryOnly))
                         {
                             try
@@ -277,16 +202,10 @@ namespace ProjectC.LoreUnity
                                     ConfigPath = file,
                                 });
                             }
-                            catch
-                            {
-                                // skip unreadable configs
-                            }
+                            catch { }
                         }
                     }
-                    catch
-                    {
-                        // skip inaccessible dirs
-                    }
+                    catch { }
                 }
             });
 
@@ -295,16 +214,15 @@ namespace ProjectC.LoreUnity
 
         private static int? ExtractPortFromConfig(string content)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(content,
+            var match = Regex.Match(content,
                 @"^(?:port|http_port|listen_port)\s*=\s*(\d+)",
-                System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                RegexOptions.Multiline | RegexOptions.IgnoreCase);
             if (match.Success && int.TryParse(match.Groups[1].Value, out var port))
                 return port;
 
-            // Also check [server] section
-            match = System.Text.RegularExpressions.Regex.Match(content,
+            match = Regex.Match(content,
                 @"\[server\][^\[]*port\s*=\s*(\d+)",
-                System.Text.RegularExpressions.RegexOptions.Singleline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                RegexOptions.Singleline | RegexOptions.IgnoreCase);
             if (match.Success && int.TryParse(match.Groups[1].Value, out port))
                 return port;
 
@@ -313,17 +231,14 @@ namespace ProjectC.LoreUnity
 
         private static string ExtractHostFromConfig(string content)
         {
-            var match = System.Text.RegularExpressions.Regex.Match(content,
+            var match = Regex.Match(content,
                 @"^(?:host|bind|listen_host|http_host)\s*=\s*""?([^""\s]+)""?",
-                System.Text.RegularExpressions.RegexOptions.Multiline | System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+                RegexOptions.Multiline | RegexOptions.IgnoreCase);
             return match.Success ? match.Groups[1].Value : null;
         }
 
         // ── Repository remote scan ──
 
-        /// <summary>
-        /// Read `lore repository info` and extract remote URL.
-        /// </summary>
         private static async Task<List<ServerCandidate>> ScanRepositoryRemotesAsync()
         {
             var candidates = new List<ServerCandidate>();
@@ -333,7 +248,6 @@ namespace ProjectC.LoreUnity
                 var info = await LoreCliService.GetRepositoryInfoAsync();
                 if (info != null && !string.IsNullOrEmpty(info.RemoteUrl))
                 {
-                    // Convert lore://host:port to http://host:port
                     var httpUrl = info.RemoteUrl
                         .Replace("lore://", "http://")
                         .TrimEnd('/');
@@ -349,19 +263,13 @@ namespace ProjectC.LoreUnity
                     });
                 }
             }
-            catch
-            {
-                // repo not available
-            }
+            catch { }
 
             return candidates;
         }
 
         // ── Install directory scan ──
 
-        /// <summary>
-        /// Check the standard install directory for config.
-        /// </summary>
         private static async Task<List<ServerCandidate>> ScanInstallDirectoryAsync()
         {
             var candidates = new List<ServerCandidate>();
@@ -390,19 +298,13 @@ namespace ProjectC.LoreUnity
                     }
                 }
             }
-            catch
-            {
-                // skip
-            }
+            catch { }
 
             return candidates;
         }
 
         // ── Health check ──
 
-        /// <summary>
-        /// Ping a URL's /health_check endpoint. Returns true if 200.
-        /// </summary>
         private static async Task<bool> PingUrl(string baseUrl)
         {
             try

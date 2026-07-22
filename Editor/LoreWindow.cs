@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using UnityEditor;
+using UnityEditor.UIElements;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -186,6 +187,9 @@ namespace ProjectC.LoreUnity
 
             // File list selection → diff
             _fileList.selectionChanged += OnFileSelected;
+
+            // Commit list selection (wired once, not on every UpdateHistoryTab)
+            _commitList.selectionChanged += OnCommitSelected;
         }
 
         // ── Tab switching ──
@@ -309,9 +313,6 @@ namespace ProjectC.LoreUnity
                 msg += "Select one to connect, or Cancel to keep current.";
 
                 // Let user choose
-                var options = servers.Select(s =>
-                    (s.IsAlive ? "● " : "○ ") + s.Url + "  (" + s.Source + ")").ToArray();
-
                 var choice = EditorUtility.DisplayDialogComplex("Lore Servers Found",
                     msg,
                     "Use First", "Cancel", "Show All...");
@@ -321,19 +322,12 @@ namespace ProjectC.LoreUnity
                     var first = servers.First();
                     LoreSettings.ServerUrl = first.Url;
                     SetStatus($"Connected to {first.Url}");
-                    // Trigger refresh after a short delay
                     await Task.Delay(500);
                     await RefreshAllAsync();
                 }
-                else if (choice == 2) // Show All — let pick from a list
+                else if (choice == 2) // Show All
                 {
-                    var pickList = servers.Select(s => s.DisplayName).ToArray();
-                    var picked = EditorUtility.DisplayDialogComplex("Select Server",
-                        "Choose server to connect to:",
-                        pickList.Length > 0 ? "Connect" : "Cancel",
-                        "Cancel", "");
-                    // Simplified: just connect to the first one since DialogComplex only supports 3 buttons
-                    if (picked == 0 && servers.Count > 0)
+                    if (servers.Count > 0)
                     {
                         var sel = servers[0];
                         LoreSettings.ServerUrl = sel.Url;
@@ -360,7 +354,7 @@ namespace ProjectC.LoreUnity
             UpdateStatusTab();
             UpdateHistoryTab();
             UpdateBranchesTab();
-            UpdateServerIndicator(); // from cached state
+            UpdateServerIndicator();
 
             _lastRefreshTime = EditorApplication.timeSinceStartup;
             SetStatus("Ready");
@@ -417,17 +411,22 @@ namespace ProjectC.LoreUnity
             _fileList.Rebuild();
         }
 
-        private async void OnFileSelected(IEnumerable<object> selection)
+        private void OnFileSelected(IEnumerable<object> selection)
         {
             var item = selection?.FirstOrDefault();
             if (item is (string Display, LoreFileEntry entry))
             {
                 // Switch to diff tab and show diff
                 SwitchTab("diff");
-                var diff = await LoreCliService.GetDiffAsync(entry.Path);
-                _diffFileLabel.text = entry.Path;
-                _diffText.text = diff ?? "(no diff content — file may be empty or binary)";
+                _ = ShowDiffAsync(entry.Path);
             }
+        }
+
+        private async Task ShowDiffAsync(string path)
+        {
+            var diff = await LoreCliService.GetDiffAsync(path);
+            _diffFileLabel.text = path;
+            _diffText.text = diff ?? "(no diff content — file may be empty or binary)";
         }
 
         // ── History Tab ──
@@ -449,11 +448,10 @@ namespace ProjectC.LoreUnity
                 }
             };
 
-            _commitList.onSelectionChange += OnCommitSelected;
             _commitList.Rebuild();
         }
 
-        private async void OnCommitSelected(IEnumerable<object> selection)
+        private void OnCommitSelected(IEnumerable<object> selection)
         {
             var commit = selection?.FirstOrDefault() as LoreCommit;
             if (commit == null) return;
@@ -464,7 +462,6 @@ namespace ProjectC.LoreUnity
                                      $"Date: {commit.Date:yyyy-MM-dd HH:mm:ss}\n\n" +
                                      $"{commit.Message}";
 
-            // Store selected hash for revert/copy
             _selectedCommitHash = commit.Signature;
         }
 
@@ -489,9 +486,9 @@ namespace ProjectC.LoreUnity
                 return;
 
             SetStatus("Reverting...");
-            var (success, output) = await LoreCliService.RevertRevisionAsync(_selectedCommitHash);
-            SetStatus(success ? "Reverted successfully" : $"Revert failed: {output}");
-            if (success) await RefreshAllAsync();
+            var result = await LoreCliService.RevertRevisionAsync(_selectedCommitHash);
+            SetStatus(result.Success ? "Reverted successfully" : $"Revert failed: {result.Output}");
+            if (result.Success) await RefreshAllAsync();
         }
 
         // ── Branches Tab ──
@@ -521,37 +518,101 @@ namespace ProjectC.LoreUnity
             listView.Rebuild();
         }
 
+        // ── Branch actions with input popup ──
+
         private async Task PromptCreateBranchAsync()
         {
-            var name = EditorUtility.InputDialog("Create Branch", "Enter new branch name:", "");
+            var name = ShowInputPopup("Create Branch", "Enter new branch name:", "");
             if (string.IsNullOrEmpty(name)) return;
 
             SetStatus($"Creating branch '{name}'...");
-            var (success, output) = await LoreCliService.CreateBranchAsync(name);
-            SetStatus(success ? $"Branch '{name}' created" : $"Failed: {output}");
-            if (success) await RefreshAllAsync();
+            var result = await LoreCliService.CreateBranchAsync(name);
+            SetStatus(result.Success ? $"Branch '{name}' created" : $"Failed: {result.Output}");
+            if (result.Success) await RefreshAllAsync();
         }
 
         private async Task PromptSwitchBranchAsync()
         {
-            var name = EditorUtility.InputDialog("Switch Branch", "Enter branch name to switch to:", _currentBranchName);
+            var name = ShowInputPopup("Switch Branch", "Enter branch name to switch to:", _currentBranchName);
             if (string.IsNullOrEmpty(name)) return;
 
             SetStatus($"Switching to '{name}'...");
-            var (success, output) = await LoreCliService.SwitchBranchAsync(name);
-            SetStatus(success ? $"Switched to '{name}'" : $"Failed: {output}");
-            if (success) await RefreshAllAsync();
+            var result = await LoreCliService.SwitchBranchAsync(name);
+            SetStatus(result.Success ? $"Switched to '{name}'" : $"Failed: {result.Output}");
+            if (result.Success) await RefreshAllAsync();
         }
 
         private async Task PromptMergeBranchAsync()
         {
-            var name = EditorUtility.InputDialog("Merge Branch", "Enter branch name to merge into current:", "");
+            var name = ShowInputPopup("Merge Branch", "Enter branch name to merge into current:", "");
             if (string.IsNullOrEmpty(name)) return;
 
             SetStatus($"Merging '{name}'...");
-            var (success, output) = await LoreCliService.MergeBranchAsync(name);
-            SetStatus(success ? $"Merged '{name}'" : $"Failed: {output}");
-            if (success) await RefreshAllAsync();
+            var result = await LoreCliService.MergeBranchAsync(name);
+            SetStatus(result.Success ? $"Merged '{name}'" : $"Failed: {result.Output}");
+            if (result.Success) await RefreshAllAsync();
+        }
+
+        /// <summary>
+        /// Simple modal input dialog using IMGUI EditorWindow.
+        /// </summary>
+        private static string ShowInputPopup(string title, string label, string defaultValue)
+        {
+            var wnd = CreateInstance<LoreInputPopup>();
+            wnd.titleContent = new GUIContent(title);
+            wnd.Label = label;
+            wnd.DefaultValue = defaultValue;
+            wnd.Result = null;
+            wnd.ShowModalUtility();
+            return wnd.Result;
+        }
+
+        /// <summary>
+        /// Temporary modal popup for text input.
+        /// </summary>
+        private class LoreInputPopup : EditorWindow
+        {
+            public string Label;
+            public string DefaultValue;
+            public string Result;
+            private string _text;
+            private bool _firstFrame = true;
+
+            private void OnGUI()
+            {
+                if (_firstFrame)
+                {
+                    _text = DefaultValue;
+                    _firstFrame = false;
+                }
+
+                GUILayout.Space(8);
+                GUILayout.Label(Label);
+                GUI.SetNextControlName("inputField");
+                _text = GUILayout.TextField(_text ?? "", 100);
+                GUILayout.Space(8);
+
+                GUILayout.BeginHorizontal();
+                GUILayout.FlexibleSpace();
+                if (GUILayout.Button("OK", GUILayout.Width(80)))
+                {
+                    Result = _text;
+                    Close();
+                }
+                if (GUILayout.Button("Cancel", GUILayout.Width(80)))
+                {
+                    Result = null;
+                    Close();
+                }
+                GUILayout.EndHorizontal();
+
+                // Focus the text field on first frame
+                if (_firstFrame)
+                {
+                    EditorGUI.FocusTextInControl("inputField");
+                    _firstFrame = false;
+                }
+            }
         }
 
         // ── Actions: Stage / Commit / Push ──
@@ -559,9 +620,9 @@ namespace ProjectC.LoreUnity
         private async Task StageAllAsync()
         {
             SetStatus("Staging...");
-            var (success, output) = await LoreCliService.StageAllAsync();
-            SetStatus(success ? "Staged all changes" : $"Stage failed: {output}");
-            if (success) await RefreshAllAsync();
+            var result = await LoreCliService.StageAllAsync();
+            SetStatus(result.Success ? "Staged all changes" : $"Stage failed: {result.Output}");
+            if (result.Success) await RefreshAllAsync();
         }
 
         private async Task CommitPushAsync()
@@ -579,25 +640,25 @@ namespace ProjectC.LoreUnity
             await LoreCliService.StageAllAsync();
 
             // Commit
-            var (commitSuccess, commitOutput) = await LoreCliService.CommitAsync(msg);
-            if (!commitSuccess)
+            var commitResult = await LoreCliService.CommitAsync(msg);
+            if (!commitResult.Success)
             {
-                SetStatus($"Commit failed: {commitOutput}");
+                SetStatus($"Commit failed: {commitResult.Output}");
                 return;
             }
 
             SetStatus("Pushing...");
 
             // Push
-            var (pushSuccess, pushOutput) = await LoreCliService.PushAsync();
-            if (pushSuccess)
+            var pushResult = await LoreCliService.PushAsync();
+            if (pushResult.Success)
             {
                 _commitMsg.value = "";
                 SetStatus("Committed + pushed ✓");
             }
             else
             {
-                SetStatus($"Committed (local), but push failed: {pushOutput}");
+                SetStatus($"Committed (local), but push failed: {pushResult.Output}");
             }
 
             await RefreshAllAsync();
