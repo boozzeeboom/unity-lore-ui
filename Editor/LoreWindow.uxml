@@ -29,6 +29,12 @@
                 showBoundCollectionSize="false"
                 showFoldoutHeader="false"
                 showAddButton="false" />
+            <ui:VisualElement name="commit-area" class="commit-area">
+                <ui:TextField name="commit-message" class="commit-message"
+                    multiline="false" placeholder="Commit message (Enter to commit)" />
+                <ui:Button text="Stage All" name="stage-all-btn" class="action-btn" />
+                <ui:Button text="Commit + Push" name="commit-push-btn" class="action-btn commit-btn" />
+            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- History tab -->
@@ -73,15 +79,7 @@
             </ui:ScrollView>
         </ui:VisualElement>
 
-        <!-- Bottom bar -->
-        <ui:VisualElement name="bottom-bar">
-            <ui:VisualElement name="commit-area">
-                <ui:TextField name="commit-message" multiline="false"
-                    placeholder="Commit message (Enter to commit)" />
-                <ui:Button text="Stage All" name="stage-all-btn" class="action-btn" />
-                <ui:Button text="Commit + Push" name="commit-push-btn" class="action-btn commit-btn" />
-            </ui:VisualElement>
-            <ui:Label name="status-bar" text="Ready" class="status-bar" />
-        </ui:VisualElement>
+        <!-- Status bar (always visible, thin) -->
+        <ui:Label name="status-bar" text="Ready" class="window-status-bar" />
     </ui:VisualElement>
 </ui:UXML>

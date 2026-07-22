@@ -9,12 +9,15 @@
 }
 
 /* ── Toolbar ── */
-#toolbar {
+.toolbar-bar {
     flex-direction: row;
     align-items: center;
     background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
     border-bottom-width: 1px;
+}
+
+#toolbar {
     padding: 2px 4px;
     min-height: 24px;
 }
@@ -40,10 +43,7 @@
 
 /* ── Tab bar ── */
 #tab-bar {
-    flex-direction: row;
-    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
-    border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
-    border-bottom-width: 1px;
+    padding: 0;
 }
 
 .tab-toggle {
@@ -105,7 +105,7 @@
     margin-bottom: 4px;
 }
 
-/* ── File list ── */
+/* ── Status tab: file list ── */
 .file-list {
     flex-grow: 1;
 }
@@ -121,13 +121,47 @@
     background-color: rgba(255, 255, 255, 0.04);
 }
 
-/* ── Commit list ── */
-.commit-list {
-    flex-grow: 1;
+/* ── Status tab: commit area ── */
+#commit-area {
+    flex-direction: row;
+    padding: 4px;
+    align-items: center;
+    flex-shrink: 0;
+    border-top-color: var(--unity-colors-list-view-border, #3a3a3a);
+    border-top-width: 1px;
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
 }
 
-.tab-panel.history-panel {
+#commit-message {
+    flex-grow: 1;
+    min-height: 22px;
+    font-size: 11px;
+    margin-right: 4px;
+}
+
+.action-btn {
+    font-size: 11px;
+    padding: 3px 12px;
+    margin: 0 2px;
+    min-width: 80px;
+}
+
+.commit-btn {
+    background-color: #27ae60;
+    color: #fff;
+}
+
+.commit-btn:hover {
+    background-color: #2ecc71;
+}
+
+/* ── History tab: commit list ── */
+#history-panel {
     overflow: hidden;
+}
+
+.commit-list {
+    flex-grow: 1;
 }
 
 .commit-list .unity-list-view__item {
@@ -157,14 +191,13 @@
     border-top-width: 1px;
     padding: 6px;
     flex-shrink: 0;
-    min-height: 80px;
+    min-height: 60px;
 }
 
 .detail-text {
     font-size: 11px;
     white-space: pre-wrap;
     color: var(--unity-colors-editor-text, #ccc);
-    margin-bottom: 6px;
 }
 
 .detail-btn {
@@ -173,10 +206,12 @@
     margin-right: 4px;
 }
 
-/* ── Branches ── */
+/* ── Branches tab ── */
 #branches-toolbar {
     flex-direction: row;
     margin-bottom: 4px;
+    border-bottom-width: 0;
+    background-color: transparent;
 }
 
 .section-label {
@@ -199,13 +234,10 @@
     font-size: 11px;
 }
 
-/* ── Diff ── */
+/* ── Diff tab ── */
 #diff-toolbar {
     flex-direction: row;
     padding: 2px 4px;
-    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
-    border-bottom-color: var(--unity-colors-toolbar-border, #1e1e1e);
-    border-bottom-width: 1px;
 }
 .diff-scroll {
     flex-grow: 1;
@@ -219,47 +251,14 @@
     padding: 4px;
 }
 
-/* ── Bottom bar ── */
-#bottom-bar {
-    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
-    border-top-color: var(--unity-colors-toolbar-border, #1e1e1e);
-    border-top-width: 1px;
-    flex-shrink: 0;
-}
-
-#commit-area {
-    flex-direction: row;
-    padding: 4px;
-    align-items: center;
-}
-
-#commit-message {
-    flex-grow: 1;
-    min-height: 22px;
-    font-size: 11px;
-    margin-right: 4px;
-}
-
-.action-btn {
-    font-size: 11px;
-    padding: 3px 12px;
-    margin: 0 2px;
-    min-width: 80px;
-}
-
-.commit-btn {
-    background-color: #27ae60;
-    color: #fff;
-}
-
-.commit-btn:hover {
-    background-color: #2ecc71;
-}
-
-#status-bar {
+/* ── Window status bar (always visible) ── */
+.window-status-bar {
     font-size: 10px;
     padding: 1px 6px;
     color: #777;
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-top-color: rgba(255, 255, 255, 0.04);
     border-top-width: 1px;
+    flex-shrink: 0;
+    min-height: 14px;
 }
