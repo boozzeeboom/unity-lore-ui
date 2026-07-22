@@ -250,26 +250,41 @@ namespace ProjectC.LoreUnity
         /// </summary>
         public static async Task<List<LoreCommitFile>> GetCommitFilesAsync(LoreCommit commit)
         {
-            if (commit == null || string.IsNullOrEmpty(commit.ParentSignature))
+            if (commit == null)
+                return new List<LoreCommitFile>();
+
+            // Lore's `history` output does NOT include the Parent field.
+            // Get it via `revision info` if missing.
+            var parentSignature = commit.ParentSignature;
+            if (string.IsNullOrEmpty(parentSignature))
+            {
+                var info = await GetRevisionInfoAsync(commit.Signature);
+                if (info == null)
+                    return new List<LoreCommitFile>();
+                parentSignature = info.ParentSignature;
+                commit.ParentSignature = parentSignature;
+            }
+
+            if (string.IsNullOrEmpty(parentSignature))
                 return new List<LoreCommitFile>();
 
             // Use lore revision diff (subcommand) — gives file list with M/A/D prefix
             var args = new[] {
                 "revision", "diff",
-                commit.ParentSignature,
+                parentSignature,
                 "--target", commit.Signature
             };
 
             var (code, output) = await ExecuteAsync(args);
             if (code != 0 || string.IsNullOrWhiteSpace(output))
             {
-                UnityEngine.Debug.Log($"[Lore] revision diff FAILED: exit={code}, parent={commit.ParentSignature}, target={commit.Signature}");
+                UnityEngine.Debug.Log($"[Lore] revision diff FAILED: exit={code}, parent={parentSignature}, target={commit.Signature}");
                 UnityEngine.Debug.Log($"[Lore] output (first 500 chars): {output?.Substring(0, Math.Min(500, output?.Length ?? 0))}");
                 return new List<LoreCommitFile>();
             }
 
             var files = LoreCliParser.ParseCommitDiffFiles(output);
-            UnityEngine.Debug.Log($"[Lore] revision diff OK: parsed {files.Count} files from {commit.RevisionNumber}@{commit.ShortHash}");
+            UnityEngine.Debug.Log($"[Lore] revision diff OK: parsed {files.Count} files from #{commit.RevisionNumber}@{commit.ShortHash}");
             return files;
         }
 
