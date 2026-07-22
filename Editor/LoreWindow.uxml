@@ -32,7 +32,7 @@
         </ui:VisualElement>
 
         <!-- History tab -->
-        <ui:VisualElement name="history-panel" class="tab-panel" style="display: none;">
+        <ui:VisualElement name="history-panel" class="tab-panel history-panel" style="display: none;">
             <ui:ListView name="commit-list" class="commit-list"
                 virtualizationMethod="DynamicHeight"
                 showBoundCollectionSize="false"

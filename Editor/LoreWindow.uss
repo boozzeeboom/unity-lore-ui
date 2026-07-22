@@ -124,7 +124,10 @@
 /* ── Commit list ── */
 .commit-list {
     flex-grow: 1;
-    max-height: 50%;
+}
+
+.tab-panel.history-panel {
+    overflow: hidden;
 }
 
 .commit-list .unity-list-view__item {
