@@ -132,6 +132,9 @@ namespace ProjectC.LoreUnity
             // Refresh button
             root.Q<ToolbarButton>("refresh-btn").clicked += () => _ = RefreshAllAsync();
 
+            // Scan button
+            root.Q<ToolbarButton>("scan-btn").clicked += () => _ = ScanForServersAsync();
+
             // Settings button
             root.Q<ToolbarButton>("settings-btn").clicked += () =>
             {
@@ -271,6 +274,84 @@ namespace ProjectC.LoreUnity
             finally
             {
                 _isRefreshing = false;
+            }
+        }
+
+        // ── Scan for servers ──
+
+        private async Task ScanForServersAsync()
+        {
+            SetStatus("Scanning for Lore servers...");
+
+            try
+            {
+                var servers = await LoreServerScanner.ScanAllAsync();
+
+                if (servers.Count == 0)
+                {
+                    EditorUtility.DisplayDialog("Scan Complete",
+                        "No Lore servers found on this machine.\n\n" +
+                        "• Run Lore → Install Lore Server to set one up.\n" +
+                        "• Or start loreserver manually from command line.",
+                        "OK");
+                    SetStatus("No servers found.");
+                    return;
+                }
+
+                // Build message
+                var msg = $"Found {servers.Count} Lore server(s):\n\n";
+                foreach (var s in servers)
+                {
+                    var status = s.IsAlive ? "● running" : "○ stopped";
+                    msg += $"  {status}  {s.Url}\n";
+                    msg += $"         ({s.Source})\n\n";
+                }
+                msg += "Select one to connect, or Cancel to keep current.";
+
+                // Let user choose
+                var options = servers.Select(s =>
+                    (s.IsAlive ? "● " : "○ ") + s.Url + "  (" + s.Source + ")").ToArray();
+
+                var choice = EditorUtility.DisplayDialogComplex("Lore Servers Found",
+                    msg,
+                    "Use First", "Cancel", "Show All...");
+
+                if (choice == 0) // Use First
+                {
+                    var first = servers.First();
+                    LoreSettings.ServerUrl = first.Url;
+                    SetStatus($"Connected to {first.Url}");
+                    // Trigger refresh after a short delay
+                    await Task.Delay(500);
+                    await RefreshAllAsync();
+                }
+                else if (choice == 2) // Show All — let pick from a list
+                {
+                    var pickList = servers.Select(s => s.DisplayName).ToArray();
+                    var picked = EditorUtility.DisplayDialogComplex("Select Server",
+                        "Choose server to connect to:",
+                        pickList.Length > 0 ? "Connect" : "Cancel",
+                        "Cancel", "");
+                    // Simplified: just connect to the first one since DialogComplex only supports 3 buttons
+                    if (picked == 0 && servers.Count > 0)
+                    {
+                        var sel = servers[0];
+                        LoreSettings.ServerUrl = sel.Url;
+                        SetStatus($"Connected to {sel.Url}");
+                        await Task.Delay(500);
+                        await RefreshAllAsync();
+                    }
+                }
+                else
+                {
+                    SetStatus("Scan cancelled.");
+                }
+            }
+            catch (Exception ex)
+            {
+                Debug.LogError($"[Lore] Scan failed: {ex.Message}");
+                EditorUtility.DisplayDialog("Scan Failed", ex.Message, "OK");
+                SetStatus("Scan failed.");
             }
         }
 

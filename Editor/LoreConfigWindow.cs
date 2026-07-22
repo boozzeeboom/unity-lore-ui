@@ -69,6 +69,48 @@ namespace ProjectC.LoreUnity
                     serverUrlField.RegisterValueChangedCallback(evt => LoreSettings.ServerUrl = evt.newValue);
                     prefs.Add(serverUrlField);
 
+                    var scanBtnRow = new VisualElement
+                    {
+                        style = { flexDirection = FlexDirection.Row, marginTop = 4 }
+                    };
+                    var scanBtn = new Button(async () =>
+                    {
+                        scanBtn.text = "Scanning...";
+                        scanBtn.SetEnabled(false);
+
+                        var servers = await LoreServerScanner.ScanAllAsync();
+                        if (servers.Count == 0)
+                        {
+                            EditorUtility.DisplayDialog("Scan Complete",
+                                "No Lore servers found on this machine.", "OK");
+                        }
+                        else
+                        {
+                            var msg = $"Found {servers.Count} server(s):\n\n";
+                            foreach (var s in servers)
+                            {
+                                msg += $"  {(s.IsAlive ? "●" : "○")}  {s.Url}\n";
+                                msg += $"       ({s.Source})\n\n";
+                            }
+
+                            var choice = EditorUtility.DisplayDialogComplex("Lore Servers Found",
+                                msg, "Use First", "Cancel", "");
+
+                            if (choice == 0)
+                            {
+                                var first = servers.First();
+                                LoreSettings.ServerUrl = first.Url;
+                                serverUrlField.value = first.Url;
+                            }
+                        }
+
+                        scanBtn.text = "Detect Servers";
+                        scanBtn.SetEnabled(true);
+                    })
+                    { text = "Detect Servers", style = { width = 120 } };
+                    scanBtnRow.Add(scanBtn);
+                    prefs.Add(scanBtnRow);
+
                     prefs.Add(new VisualElement { style = { height = 10 } });
 
                     // ── Repository Path ──

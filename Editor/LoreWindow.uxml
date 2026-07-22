@@ -7,6 +7,7 @@
             <ui:ToolbarSpacer />
             <ui:Label name="server-status" text="●" tooltip="Server status" />
             <ui:ToolbarButton text="↻" name="refresh-btn" tooltip="Refresh" />
+            <ui:ToolbarButton text="⊞" name="scan-btn" tooltip="Scan for Lore servers" />
             <ui:ToolbarButton text="⚙" name="settings-btn" tooltip="Settings" />
         </ui:Toolbar>
 
