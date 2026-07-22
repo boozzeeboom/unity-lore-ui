@@ -39,9 +39,14 @@
                 showFoldoutHeader="false"
                 showAddButton="false" />
             <ui:VisualElement name="commit-detail" class="commit-detail">
-                <ui:Label name="commit-detail-text" text="Select a commit" class="detail-text" />
-                <ui:Button text="Copy Hash" name="copy-hash-btn" class="detail-btn" />
-                <ui:Button text="Revert" name="revert-btn" class="detail-btn" style="background-color: #c0392b;" />
+                <ui:VisualElement style="flex-direction: row; align-items: flex-start;">
+                    <ui:Button text="← Back" name="back-btn" class="detail-btn" style="margin-right: 6px;" />
+                    <ui:Label name="commit-detail-text" text="Select a commit" class="detail-text" />
+                </ui:VisualElement>
+                <ui:VisualElement style="flex-direction: row; margin-top: 4px;">
+                    <ui:Button text="Copy Hash" name="copy-hash-btn" class="detail-btn" />
+                    <ui:Button text="Revert" name="revert-btn" class="detail-btn" style="background-color: #c0392b;" />
+                </ui:VisualElement>
             </ui:VisualElement>
         </ui:VisualElement>
 

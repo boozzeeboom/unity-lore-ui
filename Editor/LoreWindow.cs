@@ -185,6 +185,9 @@ namespace ProjectC.LoreUnity
             root.Q<Button>("copy-hash-btn").clicked += CopyCommitHash;
             root.Q<Button>("revert-btn").clicked += () => _ = RevertCommitAsync();
 
+            // Back button — clear commit selection
+            root.Q<Button>("back-btn").clicked += ClearCommitSelection;
+
             // Branch actions
             root.Q<Button>("new-branch-btn").clicked += () => _ = PromptCreateBranchAsync();
             root.Q<Button>("switch-branch-btn").clicked += () => _ = PromptSwitchBranchAsync();
@@ -380,6 +383,10 @@ namespace ProjectC.LoreUnity
 
         private void UpdateUI()
         {
+            // Reset commit detail on refresh
+            _commitDetailText.text = "Select a commit";
+            _selectedCommitHash = null;
+
             UpdateStatusTab();
             UpdateHistoryTab();
             UpdateBranchesTab();
@@ -473,7 +480,10 @@ namespace ProjectC.LoreUnity
                     var date = c.Date.ToString("yyyy-MM-dd");
                     label.text = $"{unpushed} #{c.RevisionNumber}  {c.ShortHash}  {date}  {c.Message?.Split('\n').FirstOrDefault() ?? ""}";
                     label.tooltip = c.Message;
-                    label.style.color = c.IsUnpushed ? new StyleColor(new Color(1f, 0.84f, 0.2f)) : new StyleColor(Color.gray);
+
+                    // Use CSS class for unpushed color (works with :selected)
+                    label.RemoveFromClassList("commit-unpushed");
+                    if (c.IsUnpushed) label.AddToClassList("commit-unpushed");
                 }
             };
 
@@ -495,6 +505,13 @@ namespace ProjectC.LoreUnity
         }
 
         private string _selectedCommitHash;
+
+        private void ClearCommitSelection()
+        {
+            _commitList.ClearSelection();
+            _commitDetailText.text = "Select a commit";
+            _selectedCommitHash = null;
+        }
 
         private void CopyCommitHash()
         {

@@ -134,6 +134,17 @@
     border-bottom-width: 1px;
 }
 
+/* Unpushed commits — yellow accent */
+.commit-list .unity-list-view__item.commit-unpushed,
+.commit-list .unity-list-view__item:selected.commit-unpushed {
+    color: #ffd700;
+}
+
+.commit-list .unity-list-view__item:selected {
+    background-color: rgba(78, 201, 176, 0.15);
+    color: #e0e0e0;
+}
+
 .commit-list .unity-list-view__item:hover {
     background-color: rgba(78, 201, 176, 0.06);
 }
