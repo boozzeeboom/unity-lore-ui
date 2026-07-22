@@ -8,7 +8,7 @@
     font-size: 12px;
 }
 
-/* ── Toolbars ── */
+/* ── Shared toolbar line ── */
 .toolbar-bar {
     flex-direction: row;
     align-items: center;
@@ -18,30 +18,27 @@
     flex-shrink: 0;
 }
 
+/* ── Top toolbar ── */
 #toolbar {
     padding: 2px 4px;
     min-height: 24px;
 }
-
 #toolbar-title {
     font-size: 13px;
     -unity-font-style: bold;
     padding: 2px 6px;
     color: var(--unity-colors-toolbar-text, #e0e0e0);
 }
-
 #branch-label {
     padding: 2px 8px;
     font-size: 11px;
     color: #4ec9b0;
 }
-
 #server-status {
     font-size: 16px;
     padding: 0 6px;
     color: #e74c3c;
 }
-
 .toolbar-button {
     font-size: 11px;
     padding: 2px 8px;
@@ -59,58 +56,46 @@
     background-color: rgba(255, 255, 255, 0.08);
 }
 
-/* ── Tab bar ── */
+/* ── Tab bar (Button-based, reliable text) ── */
 #tab-bar {
     padding: 0;
 }
-
-.tab-toggle {
+.tab-btn {
     font-size: 11px;
     padding: 4px 12px;
     margin: 0;
+    background-color: transparent;
     border-left-width: 0;
     border-right-width: 0;
     border-top-width: 0;
-    border-bottom-width: 0;
-    background-color: transparent;
-    -unity-text-align: middle-center;
-}
-
-/* Toggle label must inherit color from parent .tab-toggle */
-.tab-toggle .unity-toggle__label {
-    color: var(--unity-colors-toolbar-text, #999);
-}
-
-.tab-toggle:checked .unity-toggle__label {
-    color: #fff;
-}
-
-/* Hide checkbox graphic */
-.tab-toggle .unity-toggle__input {
-    display: none;
-}
-
-.tab-toggle:checked {
-    border-bottom-color: #4ec9b0;
     border-bottom-width: 2px;
+    border-bottom-color: transparent;
+    color: var(--unity-colors-toolbar-text, #999);
+    -unity-text-align: middle-center;
+    transition: none;
+}
+.tab-btn:hover {
+    color: #ddd;
+    background-color: rgba(255, 255, 255, 0.04);
+}
+.tab-btn.tab-active {
+    color: #fff;
+    border-bottom-color: #4ec9b0;
     background-color: rgba(78, 201, 176, 0.08);
 }
 
-/* ── Content panels (fill window between tab-bar and status-bar) ── */
+/* ── Content panels ── */
 .tab-panel {
     flex-grow: 1;
     padding: 4px;
-    /* NO overflow:scroll — breaks flex-grow children */
 }
 
 /* ── Status tab ── */
 #status-panel {
     flex-direction: column;
-    min-height: 0;
 }
 .file-list {
     flex-grow: 1;
-    min-height: 40px;
 }
 .file-list .unity-list-view__item {
     padding: 2px 4px;
@@ -121,46 +106,21 @@
 .file-list .unity-list-view__item:hover {
     background-color: rgba(255, 255, 255, 0.04);
 }
-
-/* ── Commit area (bottom of status tab) ── */
-#commit-area {
-    flex-direction: row;
-    padding: 4px;
-    align-items: center;
-    flex-shrink: 0;
-    border-top-color: var(--unity-colors-list-view-border, #3a3a3a);
-    border-top-width: 1px;
-    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
-}
-#commit-message {
-    flex-grow: 1;
-    min-height: 22px;
+.summary-label {
+    padding: 4px 6px;
     font-size: 11px;
-    margin-right: 4px;
-}
-.action-btn {
-    font-size: 11px;
-    padding: 3px 12px;
-    margin: 0 2px;
-    min-width: 80px;
-    flex-shrink: 0;
-}
-.commit-btn {
-    background-color: #27ae60;
-    color: #fff;
-}
-.commit-btn:hover {
-    background-color: #2ecc71;
+    color: #888;
+    border-bottom-color: var(--unity-colors-list-view-border, #3a3a3a);
+    border-bottom-width: 1px;
+    margin-bottom: 4px;
 }
 
 /* ── History tab ── */
 #history-panel {
     flex-direction: column;
 }
-
 .commit-list {
     flex-grow: 1;
-    min-height: 40px;
 }
 .commit-list .unity-list-view__item {
     padding: 4px 6px;
@@ -244,24 +204,43 @@
     padding: 4px;
 }
 
-/* ── Bottom status bar ── */
+/* ── Bottom bar + commit area ── */
+#bottom-bar {
+    flex-shrink: 0;
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
+    border-top-color: var(--unity-colors-list-view-border, #3a3a3a);
+    border-top-width: 1px;
+}
+.commit-area {
+    flex-direction: row;
+    padding: 4px;
+    align-items: center;
+}
+#commit-message {
+    flex-grow: 1;
+    min-height: 22px;
+    font-size: 11px;
+    margin-right: 4px;
+}
+.action-btn {
+    font-size: 11px;
+    padding: 3px 12px;
+    margin: 0 2px;
+    min-width: 80px;
+    flex-shrink: 0;
+}
+.commit-btn {
+    background-color: #27ae60;
+    color: #fff;
+}
+.commit-btn:hover {
+    background-color: #2ecc71;
+}
 .window-status-bar {
     font-size: 10px;
     padding: 1px 6px;
     color: #777;
-    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
     border-top-color: rgba(255, 255, 255, 0.04);
     border-top-width: 1px;
-    flex-shrink: 0;
     min-height: 14px;
-}
-
-/* ── Shared label ── */
-.summary-label {
-    padding: 4px 6px;
-    font-size: 11px;
-    color: #888;
-    border-bottom-color: var(--unity-colors-list-view-border, #3a3a3a);
-    border-bottom-width: 1px;
-    margin-bottom: 4px;
 }

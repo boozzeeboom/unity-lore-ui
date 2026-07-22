@@ -13,12 +13,12 @@
             <ui:Button text="⚙" name="settings-btn" class="toolbar-button" tooltip="Settings" />
         </ui:VisualElement>
 
-        <!-- Tab bar -->
+        <!-- Tab bar — using Button for reliable text rendering -->
         <ui:VisualElement name="tab-bar" class="toolbar-bar">
-            <ui:Toggle name="tab-status" text="Status" class="tab-toggle" />
-            <ui:Toggle name="tab-history" text="History" class="tab-toggle" />
-            <ui:Toggle name="tab-branches" text="Branches" class="tab-toggle" />
-            <ui:Toggle name="tab-diff" text="Diff" class="tab-toggle" />
+            <ui:Button name="tab-status" text="Status" class="tab-btn tab-active" />
+            <ui:Button name="tab-history" text="History" class="tab-btn" />
+            <ui:Button name="tab-branches" text="Branches" class="tab-btn" />
+            <ui:Button name="tab-diff" text="Diff" class="tab-btn" />
         </ui:VisualElement>
 
         <!-- Status tab -->
@@ -29,16 +29,10 @@
                 showBoundCollectionSize="false"
                 showFoldoutHeader="false"
                 showAddButton="false" />
-            <ui:VisualElement name="commit-area" class="commit-area">
-                <ui:TextField name="commit-message" class="commit-message"
-                    multiline="false" placeholder="Commit message (Enter to commit)" />
-                <ui:Button text="Stage All" name="stage-all-btn" class="action-btn" />
-                <ui:Button text="Commit + Push" name="commit-push-btn" class="action-btn commit-btn" />
-            </ui:VisualElement>
         </ui:VisualElement>
 
         <!-- History tab -->
-        <ui:VisualElement name="history-panel" class="tab-panel history-panel" style="display: none;">
+        <ui:VisualElement name="history-panel" class="tab-panel" style="display: none;">
             <ui:ListView name="commit-list" class="commit-list"
                 virtualizationMethod="DynamicHeight"
                 showBoundCollectionSize="false"
@@ -79,7 +73,15 @@
             </ui:ScrollView>
         </ui:VisualElement>
 
-        <!-- Status bar (always visible, thin) -->
-        <ui:Label name="status-bar" text="Ready" class="window-status-bar" />
+        <!-- Bottom bar (always visible) -->
+        <ui:VisualElement name="bottom-bar">
+            <ui:VisualElement name="commit-area" class="commit-area">
+                <ui:TextField name="commit-message" class="commit-message"
+                    multiline="false" placeholder="Commit message (Enter to commit)" />
+                <ui:Button text="Stage All" name="stage-all-btn" class="action-btn" />
+                <ui:Button text="Commit + Push" name="commit-push-btn" class="action-btn commit-btn" />
+            </ui:VisualElement>
+            <ui:Label name="status-bar" text="Ready" class="window-status-bar" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

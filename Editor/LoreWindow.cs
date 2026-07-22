@@ -42,6 +42,7 @@ namespace ProjectC.LoreUnity
         private VisualElement _historyPanel;
         private VisualElement _branchesPanel;
         private VisualElement _diffPanel;
+        private VisualElement _commitArea;
 
         // ── Data ──
 
@@ -87,6 +88,7 @@ namespace ProjectC.LoreUnity
             WireEvents();
 
             // Start refresh
+            SwitchTab("status");
             LoreServerManager.OnServerStatusChanged += OnServerStatusChange;
             EditorApplication.update += OnEditorUpdate;
 
@@ -126,6 +128,7 @@ namespace ProjectC.LoreUnity
             _historyPanel = root.Q<VisualElement>("history-panel");
             _branchesPanel = root.Q<VisualElement>("branches-panel");
             _diffPanel = root.Q<VisualElement>("diff-panel");
+            _commitArea = root.Q<VisualElement>("commit-area");
         }
 
         private void WireEvents()
@@ -147,27 +150,11 @@ namespace ProjectC.LoreUnity
                 SettingsService.OpenUserPreferences("Preferences/Lore");
             };
 
-            // Tab toggles
-            root.Q<Toggle>("tab-status").RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue) SwitchTab("status");
-            });
-            root.Q<Toggle>("tab-history").RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue) SwitchTab("history");
-            });
-            root.Q<Toggle>("tab-branches").RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue) SwitchTab("branches");
-            });
-            root.Q<Toggle>("tab-diff").RegisterValueChangedCallback(evt =>
-            {
-                if (evt.newValue) SwitchTab("diff");
-            });
-
-            // Default: status tab active
-            var statusToggle = root.Q<Toggle>("tab-status");
-            statusToggle.SetValueWithoutNotify(true);
+            // Tab buttons (reliable text rendering vs Toggle)
+            root.Q<Button>("tab-status").clicked += () => SwitchTab("status");
+            root.Q<Button>("tab-history").clicked += () => SwitchTab("history");
+            root.Q<Button>("tab-branches").clicked += () => SwitchTab("branches");
+            root.Q<Button>("tab-diff").clicked += () => SwitchTab("diff");
 
             // Commit
             root.Q<Button>("stage-all-btn").clicked += () => _ = StageAllAsync();
@@ -209,12 +196,23 @@ namespace ProjectC.LoreUnity
             _branchesPanel.style.display = tab == "branches" ? DisplayStyle.Flex : DisplayStyle.None;
             _diffPanel.style.display = tab == "diff" ? DisplayStyle.Flex : DisplayStyle.None;
 
-            // Update toggle states
+            // Commit area only on Status tab
+            if (_commitArea != null)
+                _commitArea.style.display = tab == "status" ? DisplayStyle.Flex : DisplayStyle.None;
+
+            // Update tab button active class
             var root = rootVisualElement;
-            root.Q<Toggle>("tab-status").SetValueWithoutNotify(tab == "status");
-            root.Q<Toggle>("tab-history").SetValueWithoutNotify(tab == "history");
-            root.Q<Toggle>("tab-branches").SetValueWithoutNotify(tab == "branches");
-            root.Q<Toggle>("tab-diff").SetValueWithoutNotify(tab == "diff");
+            foreach (var name in new[] { "tab-status", "tab-history", "tab-branches", "tab-diff" })
+            {
+                var btn = root.Q<Button>(name);
+                if (btn != null)
+                {
+                    if (name == "tab-" + tab)
+                        btn.AddToClassList("tab-active");
+                    else
+                        btn.RemoveFromClassList("tab-active");
+                }
+            }
         }
 
         // ── Refresh ──
