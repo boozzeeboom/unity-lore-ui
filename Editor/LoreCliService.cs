@@ -277,14 +277,10 @@ namespace ProjectC.LoreUnity
 
             var (code, output) = await ExecuteAsync(args);
             if (code != 0 || string.IsNullOrWhiteSpace(output))
-            {
-                UnityEngine.Debug.Log($"[Lore] revision diff FAILED: exit={code}, parent={parentSignature}, target={commit.Signature}");
-                UnityEngine.Debug.Log($"[Lore] output (first 500 chars): {output?.Substring(0, Math.Min(500, output?.Length ?? 0))}");
                 return new List<LoreCommitFile>();
-            }
 
             var files = LoreCliParser.ParseCommitDiffFiles(output);
-            UnityEngine.Debug.Log($"[Lore] revision diff OK: parsed {files.Count} files from #{commit.RevisionNumber}@{commit.ShortHash}");
+            UnityEngine.Debug.Log($"[Lore] Commit #{commit.RevisionNumber}: {files.Count} files");
             return files;
         }
 

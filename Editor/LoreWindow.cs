@@ -525,10 +525,8 @@ namespace ProjectC.LoreUnity
 
         private async Task ShowCommitFilesAsync(LoreCommit commit)
         {
-            UnityEngine.Debug.Log($"[Lore] ShowCommitFilesAsync called for commit #{commit?.RevisionNumber} {commit?.ShortHash}, parent={commit?.ParentSignature}");
             var files = await LoreCliService.GetCommitFilesAsync(commit);
             _currentCommitFiles = files;
-            UnityEngine.Debug.Log($"[Lore] ShowCommitFilesAsync: got {files.Count} files");
 
             if (_commitFilesList == null) return;
 
@@ -547,9 +545,9 @@ namespace ProjectC.LoreUnity
                 label.style.paddingLeft = 4;
                 label.style.unityTextAlign = TextAnchor.MiddleLeft;
                 var extractBtn = new Button();
-                extractBtn.text = "📋";
-                extractBtn.tooltip = "Save As...";
-                extractBtn.style.fontSize = 9;
+                extractBtn.text = "ℹ";
+                extractBtn.tooltip = "Show file info (Lore CLI cannot extract file contents)";
+                extractBtn.style.fontSize = 10;
                 extractBtn.style.paddingLeft = 2;
                 extractBtn.style.paddingRight = 2;
                 extractBtn.style.backgroundColor = new Color(0, 0, 0, 0);
@@ -585,7 +583,7 @@ namespace ProjectC.LoreUnity
                     btn.clickable = null;
                     var capturedPath = cf.Path;
                     var capturedHash = _selectedCommitHash;
-                    btn.clicked += () => _ = ExtractCommitFileAsync(capturedHash, capturedPath);
+                    btn.clicked += () => ShowCommitFilesInDiff(capturedHash, capturedPath);
                 }
             };
             _commitFilesList.Rebuild();
@@ -600,29 +598,20 @@ namespace ProjectC.LoreUnity
             }
         }
 
-        private async Task ExtractCommitFileAsync(string hash, string path)
+        private void ShowCommitFilesInDiff(string hash, string path)
         {
-            if (string.IsNullOrEmpty(hash) || string.IsNullOrEmpty(path))
-                return;
-
-            // Lore CLI does not provide a "show hash:path" command in this version.
-            // Show the diff for the file at this commit instead.
-            SetStatus($"Loading diff for {path} at {hash.Substring(0, 7)}...");
-
-            var diff = await LoreCliService.GetDiffAsync(path: path, source: hash);
-            if (string.IsNullOrEmpty(diff))
-            {
-                EditorUtility.DisplayDialog("Extract Not Available",
-                    $"Lore CLI does not provide a 'show {hash}:{path}' command in this version.\n" +
-                    "Showing the file diff instead — save manually if needed.",
-                    "OK");
-            }
-
-            // Switch to Diff tab with this file's diff
+            // Lore CLI does not provide any way to retrieve raw file contents from a revision
+            // (no `show hash:path`, no `file cat`, `revision diff --path` only echoes the file name).
+            // We display a clear message in the Diff tab.
             SwitchTab("diff");
             _diffFileLabel.text = $"{path}  @  {hash.Substring(0, 7)}";
-            _diffText.text = diff ?? "(no diff available)";
-            SetStatus("Diff loaded");
+            _diffText.text =
+                $"Cannot extract file content from revision.\n\n" +
+                $"Lore CLI in this version does not support retrieving file contents at a specific revision.\n\n" +
+                $"File: {path}\n" +
+                $"Revision: {hash}\n\n" +
+                $"To see changes, run from command line:\n" +
+                $"  lore revision diff <parent> --target {hash} --path \"{path}\"\n";
         }
 
         private async Task RevertCommitAsync()
