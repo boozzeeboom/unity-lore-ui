@@ -1,0 +1,208 @@
+/* Lore VCS for Unity — UI Toolkit Styles */
+
+/* ── Root ── */
+#lore-window {
+    flex-direction: column;
+    background-color: var(--unity-colors-editor-background, #383838);
+    color: var(--unity-colors-editor-text, #d4d4d4);
+    font-size: 12px;
+}
+
+/* ── Toolbar ── */
+#toolbar {
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
+    border-bottom: 1px solid var(--unity-colors-toolbar-border, #1e1e1e);
+    padding: 2px 4px;
+    min-height: 24px;
+}
+
+#toolbar-title {
+    font-size: 13px;
+    font-weight: bold;
+    -unity-font-style: bold;
+    padding: 2px 6px;
+    color: var(--unity-colors-toolbar-text, #e0e0e0);
+}
+
+#branch-label {
+    padding: 2px 8px;
+    font-size: 11px;
+    color: #4ec9b0;
+    -unity-font: monospace;
+}
+
+#server-status {
+    font-size: 16px;
+    padding: 0 6px;
+    color: #e74c3c;
+}
+
+/* ── Tab bar ── */
+#tab-bar {
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
+    border-bottom: 1px solid var(--unity-colors-toolbar-border, #1e1e1e);
+}
+
+.tab-toggle {
+    font-size: 11px;
+    padding: 4px 12px;
+    margin: 0;
+    border: none;
+    background-color: transparent;
+    color: var(--unity-colors-toolbar-text, #999);
+}
+
+.tab-toggle:checked {
+    color: var(--unity-colors-toolbar-text, #fff);
+    border-bottom: 2px solid #4ec9b0;
+    background-color: rgba(78, 201, 176, 0.08);
+}
+
+/* ── Panels ── */
+.tab-panel {
+    flex-grow: 1;
+    padding: 4px;
+    overflow: auto;
+}
+
+.summary-label {
+    padding: 4px 6px;
+    font-size: 11px;
+    color: #888;
+    border-bottom: 1px solid var(--unity-colors-list-view-border, #3a3a3a);
+    margin-bottom: 4px;
+}
+
+/* ── File list ── */
+.file-list {
+    flex-grow: 1;
+}
+
+.file-list .unity-list-view__item {
+    padding: 2px 4px;
+    font-size: 11px;
+    -unity-font: monospace;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.file-list .unity-list-view__item:hover {
+    background-color: rgba(255, 255, 255, 0.04);
+}
+
+/* ── Commit list ── */
+.commit-list {
+    flex-grow: 1;
+    max-height: 50%;
+}
+
+.commit-list .unity-list-view__item {
+    padding: 4px 6px;
+    font-size: 11px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.commit-list .unity-list-view__item:hover {
+    background-color: rgba(78, 201, 176, 0.06);
+}
+
+.commit-detail {
+    border-top: 1px solid var(--unity-colors-list-view-border, #3a3a3a);
+    padding: 6px;
+    flex-shrink: 0;
+    min-height: 80px;
+}
+
+.detail-text {
+    font-size: 11px;
+    white-space: pre-wrap;
+    color: var(--unity-colors-editor-text, #ccc);
+    margin-bottom: 6px;
+}
+
+.detail-btn {
+    font-size: 10px;
+    padding: 2px 8px;
+    margin-right: 4px;
+}
+
+/* ── Branches ── */
+#branches-toolbar {
+    margin-bottom: 4px;
+}
+
+.section-label {
+    font-size: 11px;
+    font-weight: bold;
+    padding: 4px 2px;
+    color: var(--unity-colors-editor-text, #aaa);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    margin-top: 4px;
+}
+
+.branch-list {
+    max-height: 120px;
+    margin-bottom: 4px;
+}
+
+.branch-list .unity-list-view__item {
+    padding: 2px 6px;
+    font-size: 11px;
+    -unity-font: monospace;
+}
+
+/* ── Diff ── */
+.diff-scroll {
+    flex-grow: 1;
+    background-color: #1e1e1e;
+}
+
+.diff-text {
+    font-size: 11px;
+    -unity-font: monospace;
+    white-space: pre;
+    color: #d4d4d4;
+    padding: 4px;
+}
+
+/* ── Bottom bar ── */
+#bottom-bar {
+    background-color: var(--unity-colors-toolbar-background, #2d2d2d);
+    border-top: 1px solid var(--unity-colors-toolbar-border, #1e1e1e);
+    flex-shrink: 0;
+}
+
+#commit-area {
+    flex-direction: row;
+    padding: 4px;
+    align-items: center;
+}
+
+#commit-message {
+    flex-grow: 1;
+    min-height: 22px;
+    font-size: 11px;
+    margin-right: 4px;
+}
+
+.action-btn {
+    font-size: 11px;
+    padding: 3px 12px;
+    margin: 0 2px;
+    min-width: 80px;
+}
+
+.commit-btn {
+    background-color: #27ae60;
+    color: #fff;
+}
+
+.commit-btn:hover {
+    background-color: #2ecc71;
+}
+
+#status-bar {
+    font-size: 10px;
+    padding: 1px 6px;
+    color: #777;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
